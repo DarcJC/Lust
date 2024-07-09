@@ -3,6 +3,7 @@ option(LUST_BUILD_FRONTEND_SHARED "" ON)
 set(LUST_FRONTEND_SOURCES
     private/lexer.cpp
     private/misc.cpp
+    private/grammar.cpp
 )
 
 if (LUST_BUILD_FRONTEND_SHARED)
