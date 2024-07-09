@@ -152,81 +152,22 @@ namespace lexer {
         std::string value;
     };
 
-    class LUSTFRONTEND_API Tokenizer {
+    class LUSTFRONTEND_API ITokenizer {
     public:
-        Tokenizer(std::string_view in_text);
+        virtual ~ITokenizer() = default;
 
-        const std::string_view original_text() const;
+        static ITokenizer* create(std::string_view in_text);
 
-        Token next_token();
+        virtual const std::string_view original_text() const = 0;
 
-        bool is_cursor_valid() const;
+        virtual Token next_token() = 0;
+
+        virtual bool is_cursor_valid() const = 0;
 
         /**
          * @brief Lookahead 1 token type state
          */
-        TerminalTokenType get_pervious_token_type() const;
-
-    protected:
-        char current_char() const;
-
-        /**
-         * @brief eat next char
-         */
-        char next_char();
-
-        /**
-         * @brief eat space, \\n, \v, \f, \r, \t
-         */
-        void consume_whitespace();
-
-        /**
-         * @brief Lookup the keyword table. If not found, it will be IDENT.
-         */
-        TerminalTokenType lookup_keyword(std::string_view text);
-
-        /**
-         * Inv lookahead
-         * @brief if matched then eat, else do nothing
-         */
-        bool match_next(char expected);
-
-        /**
-         * Inv lookahead
-         * @brief if matched then eat, else do nothing
-         */
-        bool match_next(std::string_view expected);
-
-        static Token error_token(const std::string& message);
-
-        static Token make_token(TerminalTokenType type, std::string_view val);
-
-    private:
-        // UTF-8 encoded string, be careful when using a single char
-        std::string m_text_to_parse;
-
-        // Cursor pointing to current char
-        int64_t m_text_cursor = 0;
-
-        // Previous token type
-        TerminalTokenType m_previous_token_type = TerminalTokenType::NONE;
-
-    protected:
-        // IDENT / Keyword
-        Token identifier_or_keyword();
-
-        // Number
-        Token number_literal();
-
-        // String
-        Token string_literal();
-
-        // Newline
-        Token newline();
-
-        // Comment
-        Token comment();
-
+        virtual TerminalTokenType get_pervious_token_type() const = 0;
     };
 
 }

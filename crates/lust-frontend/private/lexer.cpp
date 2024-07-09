@@ -6,6 +6,83 @@ namespace lust
 {
 namespace lexer 
 {
+    class Tokenizer : public ITokenizer {
+    public:
+        Tokenizer(std::string_view in_text);
+
+        const std::string_view original_text() const override;
+
+        Token next_token() override;
+
+        bool is_cursor_valid() const override;
+
+        /**
+         * @brief Lookahead 1 token type state
+         */
+        TerminalTokenType get_pervious_token_type() const override;
+
+    protected:
+        char current_char() const;
+
+        /**
+         * @brief eat next char
+         */
+        char next_char();
+
+        /**
+         * @brief eat space, \\n, \v, \f, \r, \t
+         */
+        void consume_whitespace();
+
+        /**
+         * @brief Lookup the keyword table. If not found, it will be IDENT.
+         */
+        TerminalTokenType lookup_keyword(std::string_view text);
+
+        /**
+         * Inv lookahead
+         * @brief if matched then eat, else do nothing
+         */
+        bool match_next(char expected);
+
+        /**
+         * Inv lookahead
+         * @brief if matched then eat, else do nothing
+         */
+        bool match_next(std::string_view expected);
+
+        static Token error_token(const std::string& message);
+
+        static Token make_token(TerminalTokenType type, std::string_view val);
+
+    private:
+        // UTF-8 encoded string, be careful when using a single char
+        std::string m_text_to_parse;
+
+        // Cursor pointing to current char
+        int64_t m_text_cursor = 0;
+
+        // Previous token type
+        TerminalTokenType m_previous_token_type = TerminalTokenType::NONE;
+
+    protected:
+        // IDENT / Keyword
+        Token identifier_or_keyword();
+
+        // Number
+        Token number_literal();
+
+        // String
+        Token string_literal();
+
+        // Newline
+        Token newline();
+
+        // Comment
+        Token comment();
+
+    };
+
     Tokenizer::Tokenizer(std::string_view in_text)
         : m_text_to_parse(in_text)
         , m_text_cursor(0)
@@ -415,6 +492,11 @@ token_exit:
             case TerminalTokenType::MAX_NUM: return "MAX_NUM";
             default: return "UNKNOWN";
         }
+    }
+
+    ITokenizer *ITokenizer::create(std::string_view in_text)
+    {
+        return new Tokenizer(in_text);
     }
 }
 }
