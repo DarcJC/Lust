@@ -2,6 +2,7 @@ option(LUST_BUILD_FRONTEND_SHARED "" ON)
 
 set(LUST_FRONTEND_SOURCES
     private/lexer.cpp
+    private/misc.cpp
 )
 
 if (LUST_BUILD_FRONTEND_SHARED)
@@ -21,4 +22,9 @@ target_include_directories(LustFrontend
         public
     PRIVATE
         private
+)
+
+target_set_api_macro(LustFrontend)
+target_precompile_headers(LustFrontend PUBLIC
+    public/public_pch.hpp
 )
