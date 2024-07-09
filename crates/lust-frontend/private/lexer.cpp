@@ -9,6 +9,7 @@ namespace lexer
     Tokenizer::Tokenizer(std::string_view in_text)
         : m_text_to_parse(in_text)
         , m_text_cursor(0)
+        , m_previous_token_type(TerminalTokenType::NONE)
     { }
 
     const std::string_view Tokenizer::original_text() const
@@ -21,97 +22,142 @@ namespace lexer
         // Consuming whitespace at the start
         consume_whitespace();
 
-        if (!is_cursor_valid()) {
-            return make_token(TerminalTokenType::END, "" );
-        }
+        Token token;
 
         char current = current_char();
 
         // Check for EOF
-        if (current == EOF) {
-            return make_token(TerminalTokenType::END, "" );
-        }
-
-        // Check for keywords and identifiers
-        if (lust_is_alpha(current) || current == '_') {
-            return identifier_or_keyword();
+        if (current == EOF || !is_cursor_valid()) {
+            token = make_token(TerminalTokenType::END, "" );
+            goto token_exit;
         }
 
         // Check for digits (integer and float literals)
         if (lust_is_digit(current)) {
-            return number_literal();
+            token = number_literal();
+            goto token_exit;
+        }
+
+        // Check for keywords and identifiers
+        if (lust_is_alpha(current) || current == '_') {
+            token = identifier_or_keyword();
+            goto token_exit;
         }
 
         // Check for newline
+        // Useless at the meanwhile because consume_whitespace ate them.
         if (current_char() == '\r' || current_char() == '\n') {
-            return newline();
+            token = newline();
+            goto token_exit;
         }
 
         // Check for single character tokens and operators
         switch (current) {
             case '=':
-                return match_next('=') ? make_token(TerminalTokenType::EQEQ, "==") : make_token(TerminalTokenType::EQ, "=");
+                token = match_next('=') ? make_token(TerminalTokenType::EQEQ, "==") : make_token(TerminalTokenType::EQ, "=");
+                break;
             case '!':
-                return match_next('=') ? make_token(TerminalTokenType::NEQ, "!=") : make_token(TerminalTokenType::NOT, "!");
+                token = match_next('=') ? make_token(TerminalTokenType::NEQ, "!=") : make_token(TerminalTokenType::NOT, "!");
+                break;
             case '<':
-                return match_next('=') ? make_token(TerminalTokenType::LTE, "<=") : make_token(TerminalTokenType::LT, "<");
+                token = match_next('=') ? make_token(TerminalTokenType::LTE, "<=") : make_token(TerminalTokenType::LT, "<");
+                break;
             case '>':
-                return match_next('=') ? make_token(TerminalTokenType::GTE, ">=") : make_token(TerminalTokenType::GT, ">");
+                token = match_next('=') ? make_token(TerminalTokenType::GTE, ">=") : make_token(TerminalTokenType::GT, ">");
+                break;
             case '+':
-                return match_next('+') ? make_token(TerminalTokenType::PLUSPLUS, "++") : make_token(TerminalTokenType::PLUS, "+");
+                token = match_next('+') ? make_token(TerminalTokenType::PLUSPLUS, "++") : make_token(TerminalTokenType::PLUS, "+");
+                break;
             case '-':
-                return match_next('-') ? make_token(TerminalTokenType::MINUSMINUS, "--") : make_token(TerminalTokenType::MINUS, "-");
+                token = match_next('-') ? make_token(TerminalTokenType::MINUSMINUS, "--") 
+                    : match_next('>') ? make_token(TerminalTokenType::ARROW, "->") : make_token(TerminalTokenType::MINUS, "-");
+                break;
             case '*':
-                return match_next('*') ? make_token(TerminalTokenType::STARSTAR, "**") : make_token(TerminalTokenType::STAR, "*");
+                token = match_next('*') ? make_token(TerminalTokenType::STARSTAR, "**") : make_token(TerminalTokenType::STAR, "*");
+                break;
             case '/':
-                return match_next('/') ? comment() : make_token(TerminalTokenType::SLASH, "/");
+                token = match_next('/') ? comment() : make_token(TerminalTokenType::SLASH, "/");
+                break;
             case '(':
-                return make_token(TerminalTokenType::LPAREN, "(");
+                token = make_token(TerminalTokenType::LPAREN, "(");
+                break;
             case ')':
-                return make_token(TerminalTokenType::RPAREN, ")");
+                token = make_token(TerminalTokenType::RPAREN, ")");
+                break;
             case '{':
-                return make_token(TerminalTokenType::LBRACE, "{");
+                token = make_token(TerminalTokenType::LBRACE, "{");
+                break;
             case '}':
-                return make_token(TerminalTokenType::RBRACE, "}");
+                token = make_token(TerminalTokenType::RBRACE, "}");
+                break;
             case ';':
-                return make_token(TerminalTokenType::SEMICOLON, ";");
+                token = make_token(TerminalTokenType::SEMICOLON, ";");
+                break;
             case ':':
-                return make_token(TerminalTokenType::COLON, ":");
+                token = make_token(TerminalTokenType::COLON, ":");
+                break;
             case '.':
-                return match_next('.') ? 
+                token = match_next('.') ? 
                         match_next('=') ? make_token(TerminalTokenType::RANGEEQ, "..=") : make_token(TerminalTokenType::RANGE, "..")
                     : make_token(TerminalTokenType::DOT, ".");
+                break;
             case ',':
-                return make_token(TerminalTokenType::COMMA, ",");
+                token = make_token(TerminalTokenType::COMMA, ",");
+                break;
             case '\'':
-                return make_token(TerminalTokenType::SQ, "'");
+                token = make_token(TerminalTokenType::SQ, "'");
+                break;
             case '"':
-                return string_literal();
+                token = string_literal();
+                break;
             case '[':
-                return make_token(TerminalTokenType::LBRACKET, "[");
+                token = make_token(TerminalTokenType::LBRACKET, "[");
+                break;
             case ']':
-                return make_token(TerminalTokenType::RBRACKET, "]");
+                token = make_token(TerminalTokenType::RBRACKET, "]");
+                break;
             case '|':
-                return match_next('|') ? make_token(TerminalTokenType::OR, "||") : make_token(TerminalTokenType::BITOR, "|");
+                token = match_next('|') ? make_token(TerminalTokenType::OR, "||") : make_token(TerminalTokenType::BITOR, "|");
+                break;
             case '&':
-                return match_next('&') ? make_token(TerminalTokenType::AND, "&&") : make_token(TerminalTokenType::BITAND, "&");
+                token = match_next('&') ? make_token(TerminalTokenType::AND, "&&") : make_token(TerminalTokenType::BITAND, "&");
+                break;
             case '^':
-                return make_token(TerminalTokenType::BITXOR, "^");
+                token = make_token(TerminalTokenType::BITXOR, "^");
+                break;
             case '~':
-                return make_token(TerminalTokenType::BITINV, "~");
+                token = make_token(TerminalTokenType::BITINV, "~");
+                break;
+            case '#':
+                token = make_token(TerminalTokenType::HASH, "#");
+                break;
             case '\r':
             case '\n':
-                return newline();
+                token = newline();
+                break;
             default:
-                return error_token("Unexpected character");
+                token = error_token("Unexpected character");
         }
 
-        return { TerminalTokenType::ERROR, "Unexpected character" };
+        if (token.type != TerminalTokenType::ERROR) {
+            // match_next() will eat token if matched
+            // so we don't need to add `token.value.size()`
+            m_text_cursor++;
+        }
+
+token_exit:
+        m_previous_token_type = token.type;
+        return token;
     }
 
     bool Tokenizer::is_cursor_valid() const
     {
         return m_text_cursor < m_text_to_parse.size() && m_text_cursor >= 0;
+    }
+
+    TerminalTokenType Tokenizer::get_pervious_token_type() const
+    {
+        return m_previous_token_type;
     }
 
     char Tokenizer::current_char() const
@@ -283,13 +329,91 @@ namespace lexer
     {
         size_t start = m_text_cursor;
 
-        while (is_cursor_valid() && current_char() != '\n') {
-            next_char();
+        std::string val;
+        val.reserve(64);
+
+        while (is_cursor_valid() && current_char() != '\n' && current_char() != '\r') {
+            char c = next_char();
+            if (c != '\r' && c != '\n') {
+                val += c;
+            }
         }
 
-        std::string_view text = m_text_to_parse.substr(start, m_text_cursor - start);
+        // std::string_view text = m_text_to_parse.substr(start, m_text_cursor - start);
 
-        return make_token(TerminalTokenType::COMMENTVAL, text);
+        return make_token(TerminalTokenType::COMMENTVAL, val);
+    }
+
+    const char *token_type_to_string(TerminalTokenType type)
+    {
+        switch (type) {
+            case TerminalTokenType::NONE: return "NONE";
+            case TerminalTokenType::LET: return "LET";
+            case TerminalTokenType::CONST: return "CONST";
+            case TerminalTokenType::MUT: return "MUT";
+            case TerminalTokenType::FN: return "FN";
+            case TerminalTokenType::STRUCT: return "STRUCT";
+            case TerminalTokenType::TRAIT: return "TRAIT";
+            case TerminalTokenType::IMPL: return "IMPL";
+            case TerminalTokenType::FOR: return "FOR";
+            case TerminalTokenType::TYPE: return "TYPE";
+            case TerminalTokenType::IF: return "IF";
+            case TerminalTokenType::ELSE: return "ELSE";
+            case TerminalTokenType::LOOP: return "LOOP";
+            case TerminalTokenType::WHILE: return "WHILE";
+            case TerminalTokenType::BREAK: return "BREAK";
+            case TerminalTokenType::CONTINUE: return "CONTINUE";
+            case TerminalTokenType::IN: return "IN";
+            case TerminalTokenType::ENUM: return "ENUM";
+            case TerminalTokenType::RANGE: return "RANGE";
+            case TerminalTokenType::RANGEEQ: return "RANGEEQ";
+            case TerminalTokenType::IDENT: return "IDENT";
+            case TerminalTokenType::EQ: return "EQ";
+            case TerminalTokenType::LPAREN: return "LPAREN";
+            case TerminalTokenType::RPAREN: return "RPAREN";
+            case TerminalTokenType::LBRACE: return "LBRACE";
+            case TerminalTokenType::RBRACE: return "RBRACE";
+            case TerminalTokenType::SEMICOLON: return "SEMICOLON";
+            case TerminalTokenType::COLON: return "COLON";
+            case TerminalTokenType::ARROW: return "ARROW";
+            case TerminalTokenType::COMMA: return "COMMA";
+            case TerminalTokenType::HASH: return "HASH";
+            case TerminalTokenType::DOT: return "DOT";
+            case TerminalTokenType::SQ: return "SQ";
+            case TerminalTokenType::DQ: return "DQ";
+            case TerminalTokenType::LBRACKET: return "LBRACKET";
+            case TerminalTokenType::RBRACKET: return "RBRACKET";
+            case TerminalTokenType::END: return "END";
+            case TerminalTokenType::OR: return "OR";
+            case TerminalTokenType::AND: return "AND";
+            case TerminalTokenType::NOT: return "NOT";
+            case TerminalTokenType::EQEQ: return "EQEQ";
+            case TerminalTokenType::NEQ: return "NEQ";
+            case TerminalTokenType::LT: return "LT";
+            case TerminalTokenType::LTE: return "LTE";
+            case TerminalTokenType::GT: return "GT";
+            case TerminalTokenType::GTE: return "GTE";
+            case TerminalTokenType::PLUS: return "PLUS";
+            case TerminalTokenType::PLUSPLUS: return "PLUSPLUS";
+            case TerminalTokenType::MINUS: return "MINUS";
+            case TerminalTokenType::MINUSMINUS: return "MINUSMINUS";
+            case TerminalTokenType::STAR: return "STAR";
+            case TerminalTokenType::STARSTAR: return "STARSTAR";
+            case TerminalTokenType::SLASH: return "SLASH";
+            case TerminalTokenType::COMMENT: return "COMMENT";
+            case TerminalTokenType::BITOR: return "BITOR";
+            case TerminalTokenType::BITXOR: return "BITXOR";
+            case TerminalTokenType::BITAND: return "BITAND";
+            case TerminalTokenType::BITINV: return "BITINV";
+            case TerminalTokenType::INT: return "INT";
+            case TerminalTokenType::FLOAT: return "FLOAT";
+            case TerminalTokenType::STRING: return "STRING";
+            case TerminalTokenType::NEWLINE: return "NEWLINE";
+            case TerminalTokenType::COMMENTVAL: return "COMMENTVAL";
+            case TerminalTokenType::ERROR: return "ERROR";
+            case TerminalTokenType::MAX_NUM: return "MAX_NUM";
+            default: return "UNKNOWN";
+        }
     }
 }
 }

@@ -143,6 +143,8 @@ namespace lexer {
         MAX_NUM,
     };
 
+    extern const char* token_type_to_string(TerminalTokenType type);
+
     struct Token {
         TerminalTokenType type;
         std::string value;
@@ -156,9 +158,14 @@ namespace lexer {
 
         Token next_token();
 
-    protected:
         bool is_cursor_valid() const;
 
+        /**
+         * @brief Lookahead 1 token type state
+         */
+        TerminalTokenType get_pervious_token_type() const;
+
+    protected:
         char current_char() const;
 
         /**
@@ -199,6 +206,8 @@ namespace lexer {
         // Cursor pointing to current char
         int64_t m_text_cursor = 0;
 
+        // Previous token type
+        TerminalTokenType m_previous_token_type = TerminalTokenType::NONE;
 
     protected:
         // IDENT / Keyword

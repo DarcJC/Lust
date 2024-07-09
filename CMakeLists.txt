@@ -24,3 +24,8 @@ include(cmake/TargetHelper.cmake)
 
 # Add targets
 add_subdirectory(crates)
+
+option(LUST_ENABLE_TESTS "" ON)
+if (LUST_ENABLE_TESTS OR CMAKE_PROJECT_IS_TOP_LEVEL)
+        add_subdirectory(tests)
+endif()
