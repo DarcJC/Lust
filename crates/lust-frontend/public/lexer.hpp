@@ -65,6 +65,8 @@ namespace lexer {
         SEMICOLON,
         // :
         COLON,
+        // ::
+        COLONCOLON,
         // ->
         ARROW,
         // ,

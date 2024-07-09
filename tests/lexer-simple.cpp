@@ -5,7 +5,7 @@ const char test_data[] =
 R"LUST(
 
 /// This is a COMMENT
-#[label]
+#[label::label]
 fn main(val: XXX<u8>, val2: Abc) -> ! {
     let a: u8 = 123;
     let b: Option<AnyType> = None;

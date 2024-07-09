@@ -94,7 +94,7 @@ namespace lexer
                 token = make_token(TerminalTokenType::SEMICOLON, ";");
                 break;
             case ':':
-                token = make_token(TerminalTokenType::COLON, ":");
+                token = match_next(':') ? make_token(TerminalTokenType::COLONCOLON, "::") : make_token(TerminalTokenType::COLON, ":");
                 break;
             case '.':
                 token = match_next('.') ? 
@@ -375,6 +375,7 @@ token_exit:
             case TerminalTokenType::RBRACE: return "RBRACE";
             case TerminalTokenType::SEMICOLON: return "SEMICOLON";
             case TerminalTokenType::COLON: return "COLON";
+            case TerminalTokenType::COLONCOLON: return "COLONCOLON";
             case TerminalTokenType::ARROW: return "ARROW";
             case TerminalTokenType::COMMA: return "COMMA";
             case TerminalTokenType::HASH: return "HASH";
