@@ -28,7 +28,7 @@ impl Display for Foo<u8> {
 )LUST";
 
 void entry() {
-    lust::lexer::ITokenizer* lexer = lust::lexer::ITokenizer::create(std::string_view(test_data, sizeof(test_data)));
+    lust::lexer::TokenStream lexer = lust::lexer::ITokenizer::create(std::string_view(test_data, sizeof(test_data)));
     while (lexer->is_cursor_valid()) {
         lust::lexer::Token token = lexer->next_token();
         if (token.type == lust::lexer::TerminalTokenType::ERROR) {
@@ -36,6 +36,4 @@ void entry() {
         }
         std::cout << lust::lexer::token_type_to_string(token.type) << ": " << token.value << std::endl;
     }
-
-    delete lexer;
 }

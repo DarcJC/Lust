@@ -494,9 +494,29 @@ token_exit:
         }
     }
 
-    ITokenizer *ITokenizer::create(std::string_view in_text)
+    TokenStream ITokenizer::create(std::string_view in_text)
     {
         return new Tokenizer(in_text);
+    }
+
+    TokenStream::TokenStream(ITokenizer *data_src)
+        : m_data_src(data_src)
+    { }
+
+    TokenStream::~TokenStream()
+    {
+        delete m_data_src;
+    }
+
+    TokenStream &TokenStream::operator=(ITokenizer *data_src) noexcept
+    {
+        m_data_src = data_src;
+        return *this;
+    }
+
+    ITokenizer *TokenStream::operator->()
+    {
+        return m_data_src;
     }
 }
 }

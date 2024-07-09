@@ -9,6 +9,8 @@ namespace lust {
 
 namespace lexer {
 
+    class ITokenizer;
+
     enum class TerminalTokenType : uint32_t {
         NONE,
         // let
@@ -152,11 +154,24 @@ namespace lexer {
         std::string value;
     };
 
+    class LUSTFRONTEND_API TokenStream final {
+    public:
+        TokenStream(ITokenizer* data_src);
+        ~TokenStream();
+        TokenStream& operator=(ITokenizer* data_src) noexcept;
+
+        ITokenizer* operator->();
+
+    private:
+        ITokenizer* m_data_src = nullptr;
+    };
+
+
     class LUSTFRONTEND_API ITokenizer {
     public:
         virtual ~ITokenizer() = default;
 
-        static ITokenizer* create(std::string_view in_text);
+        static TokenStream create(std::string_view in_text);
 
         virtual const std::string_view original_text() const = 0;
 
