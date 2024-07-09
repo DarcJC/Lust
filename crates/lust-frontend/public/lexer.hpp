@@ -160,6 +160,12 @@ namespace lexer {
         ~TokenStream();
         TokenStream& operator=(ITokenizer* data_src) noexcept;
 
+        TokenStream(const TokenStream&) = delete;
+        TokenStream& operator=(const TokenStream&) = delete;
+
+        TokenStream(TokenStream&& other);
+        TokenStream& operator=(TokenStream&& other) noexcept;
+
         ITokenizer* operator->();
 
     private:

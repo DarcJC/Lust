@@ -514,6 +514,22 @@ token_exit:
         return *this;
     }
 
+    TokenStream::TokenStream(TokenStream &&other)
+    {
+        m_data_src = other.m_data_src;
+        other.m_data_src = nullptr;
+    }
+
+    TokenStream &TokenStream::operator=(TokenStream &&other) noexcept
+    {
+        if (this != &other) {
+            m_data_src = other.m_data_src;
+            other.m_data_src = nullptr;
+        }
+
+        return *this;
+    }
+
     ITokenizer *TokenStream::operator->()
     {
         return m_data_src;
