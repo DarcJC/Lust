@@ -154,8 +154,10 @@ namespace lexer {
         lust::simple_string filename = "<eval>";
         lust::simple_string function_name = "<anonymous>";
         int64_t line = -1;
-        int64_t pos = -1;
+        int64_t row = -1;
     };
+
+    extern SourceLoc pos_to_line_and_row(std::string_view full_text, int64_t pos);
 
     /**
      * @warning Don't try to destruct this struct crossing binary boundary because using STL here.

@@ -294,7 +294,7 @@ token_exit:
             return it->second;
         }
 
-        return TerminalTokenType::IDENT;
+        return m_previous_token_type == TerminalTokenType::COLON ? TerminalTokenType::TYPE : TerminalTokenType::IDENT;
     }
 
     bool Tokenizer::match_next(char expected)
@@ -538,6 +538,27 @@ token_exit:
     const char* Token::get_value() const
     {
         return value;
+    }
+
+    SourceLoc pos_to_line_and_row(std::string_view full_text, int64_t pos) {
+        SourceLoc loc;
+        if (pos >= 0 && pos <= static_cast<int64_t>(full_text.size())) {
+            int64_t current_line = 0;
+            int64_t current_row = 0;
+
+            for (int64_t i = 0; i <= pos; ++i) {
+                if (full_text[i] == '\n') {
+                    ++current_line;
+                    current_row = 0;
+                } else {
+                    ++current_row;
+                }
+            }
+
+            loc.line = current_line;
+            loc.row = current_line;
+        }
+        return loc;
     }
 }
 }
