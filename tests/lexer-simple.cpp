@@ -34,6 +34,6 @@ void entry() {
         if (token.type == lust::lexer::TerminalTokenType::ERROR) {
             break;
         }
-        std::cout << lust::lexer::token_type_to_string(token.type) << ": " << token.value << std::endl;
+        std::cout << lust::lexer::token_type_to_string(token.type) << ": " << token.get_value() << std::endl;
     }
 }

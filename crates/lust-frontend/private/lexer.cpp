@@ -330,7 +330,7 @@ token_exit:
 
     Token Tokenizer::make_token(TerminalTokenType type, std::string_view val)
     {
-        return { type, std::string(val) };
+        return { type, val };
     }
 
     Token Tokenizer::identifier_or_keyword()
@@ -533,6 +533,11 @@ token_exit:
     ITokenizer *TokenStream::operator->()
     {
         return m_data_src;
+    }
+
+    const char* Token::get_value() const
+    {
+        return value;
     }
 }
 }

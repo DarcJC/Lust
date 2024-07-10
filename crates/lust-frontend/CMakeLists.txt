@@ -4,15 +4,22 @@ set(LUST_FRONTEND_SOURCES
     private/lexer.cpp
     private/misc.cpp
     private/grammar.cpp
+    private/parser.cpp
+)
+
+set(LUST_CONTAINER_SOURCES
+    private/container/simple_string.cpp
 )
 
 if (LUST_BUILD_FRONTEND_SHARED)
     add_library(LustFrontend SHARED
         ${LUST_FRONTEND_SOURCES}
+        ${LUST_CONTAINER_SOURCES}
     )
 else()
     add_library(LustFrontend STATIC
         ${LUST_FRONTEND_SOURCES}
+        ${LUST_CONTAINER_SOURCES}
     )
 endif()
 

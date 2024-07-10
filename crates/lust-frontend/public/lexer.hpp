@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include "container/simple_string.hpp"
 
 namespace lust {
 
@@ -149,9 +150,17 @@ namespace lexer {
 
     extern const char* token_type_to_string(TerminalTokenType type);
 
+    /**
+     * @warning Don't try to destruct this struct crossing binary boundary because using STL here.
+     */
     struct Token {
         TerminalTokenType type;
-        std::string value;
+        lust::simple_string value;
+
+        /**
+         * @note Use this interface to ensure ABI compatibility
+         */
+        const char* get_value() const;
     };
 
     class LUSTFRONTEND_API TokenStream final {

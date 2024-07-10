@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <cctype>
 
+#include "container/simple_string.hpp"
+
 extern "C" {
 
     bool lust_is_space(char c);
