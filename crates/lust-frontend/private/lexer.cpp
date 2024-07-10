@@ -557,8 +557,8 @@ token_exit:
                 }
             }
 
-            loc.line = current_line;
-            loc.row = current_line;
+            loc.line = current_line + 1;
+            loc.row = current_line + 1;
         }
         return loc;
     }
