@@ -1,19 +1,18 @@
 #pragma once
 
 #include <type_traits>
+#include <utility>
 
 namespace lust
 {
     template<typename T>
     class UniquePtr {
-    private:
-        T* ptr;
-
     public:
+        UniquePtr() : ptr(nullptr) {}
         UniquePtr(std::nullptr_t) : ptr(nullptr) {}
 
         template <typename U = T>
-        explicit UniquePtr(U* p = nullptr) : ptr(p) {}
+        explicit UniquePtr(U* p) : ptr(p) {}
 
         UniquePtr(const UniquePtr&) = delete;
         UniquePtr& operator=(const UniquePtr&) = delete;
@@ -22,8 +21,9 @@ namespace lust
             moving.ptr = nullptr;
         }
 
-        UniquePtr& operator=(UniquePtr&& moving) noexcept {
-            if (this != &moving) {
+        template <typename U>
+        UniquePtr<T>& operator=(UniquePtr<U>&& moving) noexcept {
+            if ((void*)this != (void*)&moving) {
                 delete ptr;
                 ptr = moving.ptr;
                 moving.ptr = nullptr;
@@ -54,14 +54,16 @@ namespace lust
 
         bool is_null() const { return ptr == nullptr; }
 
-        operator bool() {
+        operator bool() const {
             return is_null();
         }
 
-        template <typename U, typename = std::enable_if<std::is_assignable<U, T>::value>::type>
-        operator UniquePtr<U>() {
+        template <typename U>
+        operator UniquePtr<typename std::enable_if<std::is_assignable<U, T>::value, U>::type>() {
             return UniquePtr<U>(release());
         }
+
+        T* ptr;
     };
 
     template <typename T, typename... Args>

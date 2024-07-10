@@ -1,22 +1,60 @@
 #pragma once
 
 #include "lexer.hpp"
+#include "container/unique_ptr.hpp"
+#include "container/vector.hpp"
 
 namespace lust
 {
 namespace grammar
 {
+    enum class GrammarRule : uint32_t {
+        NONE,
 
-    class IASTNode {
-    protected:
+        PROGRAM,
+        STATEMENT,
+        EXPR_STATEMENT,
+        VAR_DECL,
+        FUNCTION_DECL,
+        ATTRIBUTE,
+
+        MAX_NUM,
+    };
+
+    struct IASTNode {
+    public:
         virtual ~IASTNode();
 
+        virtual GrammarRule get_type() const = 0;
     };
 
-    class ASTBaseNode : public IASTNode { };
-
-    class ASTNode_Program : public ASTBaseNode {
+    template <GrammarRule Rule, class Parent = IASTNode>
+    struct ASTBaseNode : public Parent { 
+        constexpr GrammarRule get_type() const override {
+            return Rule;
+        }
     };
 
+    struct ASTNode_Attribute : public ASTBaseNode<GrammarRule::ATTRIBUTE> {
+        simple_string name;
+        vector<simple_string> args;
+    };
+
+    struct ASTNode_Statement : public ASTBaseNode<GrammarRule::STATEMENT> {
+        vector<UniquePtr<ASTNode_Attribute>> attributes;
+    };
+
+    struct ASTNode_ExprStatement : public ASTBaseNode<GrammarRule::EXPR_STATEMENT, ASTNode_Statement> {
+    };
+
+    struct ASTNode_Program : public ASTBaseNode<GrammarRule::PROGRAM> {
+        vector<UniquePtr<ASTNode_Statement>> statements;
+    };
+
+    struct ASTNode_VarDecl : public ASTBaseNode<GrammarRule::VAR_DECL, ASTNode_Statement> {
+    };
+
+    struct ASTNode_FunctionDecl : public ASTBaseNode<GrammarRule::FUNCTION_DECL, ASTNode_Statement> {
+    };
 }
 }

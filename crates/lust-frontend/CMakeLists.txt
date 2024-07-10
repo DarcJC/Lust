@@ -9,6 +9,7 @@ set(LUST_FRONTEND_SOURCES
 
 set(LUST_CONTAINER_SOURCES
     private/container/simple_string.cpp
+    private/container/vector.cpp
 )
 
 if (LUST_BUILD_FRONTEND_SHARED)

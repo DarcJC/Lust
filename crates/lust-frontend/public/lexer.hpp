@@ -143,6 +143,12 @@ namespace lexer {
         // comment value
         COMMENTVAL,
 
+        // self
+        SELF,
+
+        // #[
+        ATTRIBUTE_START,
+
         // error
         ERROR,
         MAX_NUM,

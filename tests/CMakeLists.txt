@@ -16,3 +16,4 @@ function(add_single_file_test_target name)
 endfunction(add_single_file_test_target)
 
 add_single_file_test_target(lexer-simple)
+add_single_file_test_target(parser-simple)

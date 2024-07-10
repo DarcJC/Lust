@@ -206,7 +206,7 @@ namespace lexer
                 token = make_token(TerminalTokenType::BITINV, "~");
                 break;
             case '#':
-                token = make_token(TerminalTokenType::HASH, "#");
+                token = match_next('[') ? make_token(TerminalTokenType::ATTRIBUTE_START, "#[") : make_token(TerminalTokenType::HASH, "#");
                 break;
             case '\r':
             case '\n':
@@ -488,6 +488,8 @@ token_exit:
             case TerminalTokenType::STRING: return "STRING";
             case TerminalTokenType::NEWLINE: return "NEWLINE";
             case TerminalTokenType::COMMENTVAL: return "COMMENTVAL";
+            case TerminalTokenType::SELF: return "SELF";
+            case TerminalTokenType::ATTRIBUTE_START: return "ATTRIBUTE_START";
             case TerminalTokenType::ERROR: return "ERROR";
             case TerminalTokenType::MAX_NUM: return "MAX_NUM";
             default: return "UNKNOWN";
