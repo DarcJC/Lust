@@ -150,12 +150,20 @@ namespace lexer {
 
     extern const char* token_type_to_string(TerminalTokenType type);
 
+    struct SourceLoc {
+        lust::simple_string filename = "<eval>";
+        lust::simple_string function_name = "<anonymous>";
+        int64_t line = -1;
+        int64_t pos = -1;
+    };
+
     /**
      * @warning Don't try to destruct this struct crossing binary boundary because using STL here.
      */
     struct Token {
         TerminalTokenType type;
         lust::simple_string value;
+        int64_t pos;
 
         /**
          * @note Use this interface to ensure ABI compatibility

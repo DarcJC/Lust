@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string_view>
+#include <ostream>
 
 namespace lust
 {
@@ -33,4 +34,13 @@ namespace lust
         size_t m_length = 0;
 
     };
+
+    inline std::ostream& operator<<(std::ostream& os, const lust::simple_string& str) {
+        if (!str.is_empty()) {
+            os << str.operator const char *();
+        }
+
+        return os;
+    }
 }
+

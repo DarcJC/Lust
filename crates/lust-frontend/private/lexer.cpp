@@ -51,9 +51,9 @@ namespace lexer
          */
         bool match_next(std::string_view expected);
 
-        static Token error_token(const std::string& message);
+        Token error_token(std::string_view message);
 
-        static Token make_token(TerminalTokenType type, std::string_view val);
+        Token make_token(TerminalTokenType type, std::string_view val);
 
     private:
         // UTF-8 encoded string, be careful when using a single char
@@ -323,14 +323,14 @@ token_exit:
         return true;
     }
 
-    Token Tokenizer::error_token(const std::string &message)
+    Token Tokenizer::error_token(std::string_view message)
     {
-        return make_token(TerminalTokenType::ERROR, message);
+        return { TerminalTokenType::ERROR, message, m_text_cursor };
     }
 
     Token Tokenizer::make_token(TerminalTokenType type, std::string_view val)
     {
-        return { type, val };
+        return { type, val, m_text_cursor - static_cast<int64_t>(val.size()) };
     }
 
     Token Tokenizer::identifier_or_keyword()
