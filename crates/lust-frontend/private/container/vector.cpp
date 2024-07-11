@@ -201,6 +201,8 @@ namespace lust {
     template class vector<simple_string>;
     template class vector<UniquePtr<grammar::ASTNode_Statement>>;
     template class vector<UniquePtr<grammar::ASTNode_Attribute>>;
+    template class vector<grammar::QualifierName>;
+    template class vector<UniquePtr<grammar::ASTNode_GenericParam>>;
     // 添加其他需要支持的类型
 
 } // namespace lust

@@ -17,8 +17,18 @@ namespace grammar
         VAR_DECL,
         FUNCTION_DECL,
         ATTRIBUTE,
+        GENERIC_PARAM,
+        GENERIC,
 
         MAX_NUM,
+    };
+
+    enum class Visibility : uint8_t {
+        DEFAULT = 0,
+        SELF = 0,
+        SUPER = 1,
+        CRATE = 2,
+        PUBLIC = 3,
     };
 
     struct IASTNode {
@@ -45,8 +55,18 @@ namespace grammar
         vector<simple_string> args;
     };
 
+    struct ASTNode_GenericParam : public ASTBaseNode<GrammarRule::GENERIC_PARAM> {
+        simple_string identifier;
+        vector<QualifierName> constraints;
+    };
+
+    struct ASTNode_Generic : public ASTBaseNode<GrammarRule::GENERIC> {
+        vector<UniquePtr<ASTNode_GenericParam>> params;
+    };
+
     struct ASTNode_Statement : public ASTBaseNode<GrammarRule::STATEMENT> {
         vector<UniquePtr<ASTNode_Attribute>> attributes{};
+        Visibility visibility;
     };
 
     struct ASTNode_ExprStatement : public ASTBaseNode<GrammarRule::EXPR_STATEMENT, ASTNode_Statement> {
@@ -61,6 +81,9 @@ namespace grammar
     };
 
     struct ASTNode_FunctionDecl : public ASTBaseNode<GrammarRule::FUNCTION_DECL, ASTNode_Statement> {
+        bool is_async = false;
+        simple_string identifier;
+        UniquePtr<ASTNode_Generic> generic;
     };
 }
 }

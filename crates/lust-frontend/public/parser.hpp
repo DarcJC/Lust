@@ -18,6 +18,11 @@ namespace grammar
          * Starting to parse token stream into AST
          */
         virtual lust::UniquePtr<ASTNode_Program> parse() = 0;
+
+        /**
+         * Check does error occurred during parsing
+         */
+        virtual bool is_error_occurred() const = 0;
     };
 
 }

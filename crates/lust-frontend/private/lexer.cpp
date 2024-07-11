@@ -289,7 +289,13 @@ token_exit:
             { "enum", TerminalTokenType::ENUM },
             { "or", TerminalTokenType::OR },
             { "and", TerminalTokenType::AND },
-            { "not", TerminalTokenType::NOT }
+            { "not", TerminalTokenType::NOT },
+            { "async", TerminalTokenType::ASYNC },
+            { "await", TerminalTokenType::AWAIT },
+            { "pub", TerminalTokenType::PUB },
+            { "crate", TerminalTokenType::CRATE },
+            { "super", TerminalTokenType::SUPER },
+            { "mod", TerminalTokenType::MOD },
         };
         if (auto it = keywords.find(std::string(text)); it != keywords.end()) {
             return it->second;
@@ -506,6 +512,11 @@ token_exit:
             case TerminalTokenType::SELF: return "SELF";
             case TerminalTokenType::ATTRIBUTE_START: return "ATTRIBUTE_START";
             case TerminalTokenType::GLOBAL_ATTRIBUTE_START: return "GLOBAL_ATTRIBUTE_START";
+            case TerminalTokenType::ASYNC: return "ASYNC";
+            case TerminalTokenType::AWAIT: return "AWAIT";
+            case TerminalTokenType::PUB: return "PUB";
+            case TerminalTokenType::CRATE: return "CRATE";
+            case TerminalTokenType::SUPER: return "SUPER";
             case TerminalTokenType::ERROR: return "ERROR";
             case TerminalTokenType::MAX_NUM: return "MAX_NUM";
             default: return "UNKNOWN";
@@ -574,7 +585,7 @@ token_exit:
             }
 
             loc.line = current_line + 1;
-            loc.row = current_line + 1;
+            loc.row = current_row + 1;
         }
         return loc;
     }

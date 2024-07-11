@@ -6,8 +6,8 @@ const char test_data[] =
 R"LUST(
 
 /// This is a COMMENT
-#[label::label, label2()]
-fn main(val: XXX<u8>, val2: Abc) -> ! {
+#[label::label, label2()] // Comment here
+pub(crate) async fn foo(val: XXX<u8>, val2: Abc) -> ! { // Comment here
     let a: u8 = 123;
     let b: Option<AnyType> = None;
 }

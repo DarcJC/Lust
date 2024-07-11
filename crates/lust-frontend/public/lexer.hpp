@@ -145,11 +145,22 @@ namespace lexer {
 
         // self
         SELF,
-
         // #[
         ATTRIBUTE_START,
         // #!
         GLOBAL_ATTRIBUTE_START,
+        // async
+        ASYNC,
+        // await
+        AWAIT,
+        // pub
+        PUB,
+        // crate
+        CRATE,
+        // super
+        SUPER,
+        // mod
+        MOD,
 
         // error
         ERROR,
