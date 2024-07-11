@@ -5,7 +5,7 @@
 namespace lust
 {
     template <typename T>
-    class vector {
+    class LUSTFRONTEND_API vector {
     public:
         // 构造函数和析构函数
         vector();
@@ -41,18 +41,14 @@ namespace lust
         void emplace_back(Args&&... args);
         void extend(vector&& other);
 
-        const T* begin() const {
-            return &front();
-        }
-        const T* end() const {
-            return &front() + size();
-        }
-        T* begin() {
-            return &front();
-        }
-        T* end() {
-            return &front() + size();
-        }
+        // 迭代器
+        const T* begin() const;
+        const T* end() const;         
+        T* begin();
+        T* end();
+
+        // 工具函数
+        vector<T> slice(size_t begin_pos, size_t end_pos) const;
 
     private:
         class Impl;  // 声明一个私有的实现类

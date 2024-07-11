@@ -206,7 +206,8 @@ namespace lexer
                 token = make_token(TerminalTokenType::BITINV, "~");
                 break;
             case '#':
-                token = match_next('[') ? make_token(TerminalTokenType::ATTRIBUTE_START, "#[") : make_token(TerminalTokenType::HASH, "#");
+                token = match_next('[') ? make_token(TerminalTokenType::ATTRIBUTE_START, "#[") :
+                    match_next('!') ? make_token(TerminalTokenType::GLOBAL_ATTRIBUTE_START, "#!") : make_token(TerminalTokenType::HASH, "#");
                 break;
             case '\r':
             case '\n':
@@ -378,11 +379,25 @@ token_exit:
         // Skip the opening quote
         size_t start = ++m_text_cursor;
 
-        while (is_cursor_valid() && current_char() != '"') {
+        bool is_escaped = false;
+
+        while (is_cursor_valid()) {
+            char c = current_char();
+
+            if (!is_escaped && c == '"') {
+                break;
+            } else if (is_escaped) {
+                is_escaped = false;
+            } else if (c == '\\') {
+                is_escaped = true;
+            } else {
+                is_escaped = false;
+            }
+
             next_char();
         }
 
-        if (!is_cursor_valid()) {
+        if (!is_cursor_valid() || current_char() != '"') {
             return error_token("Unterminated string literal");
         }
 
@@ -490,6 +505,7 @@ token_exit:
             case TerminalTokenType::COMMENTVAL: return "COMMENTVAL";
             case TerminalTokenType::SELF: return "SELF";
             case TerminalTokenType::ATTRIBUTE_START: return "ATTRIBUTE_START";
+            case TerminalTokenType::GLOBAL_ATTRIBUTE_START: return "GLOBAL_ATTRIBUTE_START";
             case TerminalTokenType::ERROR: return "ERROR";
             case TerminalTokenType::MAX_NUM: return "MAX_NUM";
             default: return "UNKNOWN";

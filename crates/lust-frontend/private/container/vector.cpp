@@ -22,6 +22,8 @@ namespace lust {
     vector<T>::vector(const vector<T>& other)  {
         if constexpr (std::is_copy_constructible<T>::value) {
             pimpl = new Impl(*other.pimpl);
+        } else {
+            pimpl = new Impl(std::move(*other.pimpl));
         }
     }
 
@@ -152,9 +154,50 @@ namespace lust {
         pimpl->data.emplace_back(std::forward<Args>(args)...);
     }
 
+    template <typename T>
+    T* vector<T>::begin() {
+        return &front();
+    }
+
+    template <typename T>
+    T* vector<T>::end() {
+        return &front() + size();
+    }
+
+    template <typename T>
+    vector<T> vector<T>::slice(size_t begin_pos, size_t end_pos) const
+    {
+        vector<T> vec;
+
+        for (int i = begin_pos; i < end_pos; ++i) {
+            vec.push_back(at(i));
+        }
+
+        return vec;
+    }
+
+    template <typename T>
+    const T *vector<T>::begin() const
+    {
+        return &front();
+    }
+
+    template <typename T>
+    const T* vector<T>::end() const {
+        return &front() + size();
+    }
+
     // 显式实例化模板
-    template class vector<int>;
+    template class vector<int8_t>;
+    template class vector<int16_t>;
+    template class vector<int32_t>;
+    template class vector<int64_t>;
+    template class vector<uint8_t>;
+    template class vector<uint16_t>;
+    template class vector<uint32_t>;
+    template class vector<uint64_t>;
     template class vector<double>;
+    template class vector<float>;
     template class vector<simple_string>;
     template class vector<UniquePtr<grammar::ASTNode_Statement>>;
     template class vector<UniquePtr<grammar::ASTNode_Attribute>>;

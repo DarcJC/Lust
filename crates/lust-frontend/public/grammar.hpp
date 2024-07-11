@@ -35,20 +35,26 @@ namespace grammar
         }
     };
 
-    struct ASTNode_Attribute : public ASTBaseNode<GrammarRule::ATTRIBUTE> {
+    struct QualifierName { 
         simple_string name;
+        vector<simple_string> name_spaces;
+    };
+
+    struct ASTNode_Attribute : public ASTBaseNode<GrammarRule::ATTRIBUTE> {
+        QualifierName name;
         vector<simple_string> args;
     };
 
     struct ASTNode_Statement : public ASTBaseNode<GrammarRule::STATEMENT> {
-        vector<UniquePtr<ASTNode_Attribute>> attributes;
+        vector<UniquePtr<ASTNode_Attribute>> attributes{};
     };
 
     struct ASTNode_ExprStatement : public ASTBaseNode<GrammarRule::EXPR_STATEMENT, ASTNode_Statement> {
     };
 
     struct ASTNode_Program : public ASTBaseNode<GrammarRule::PROGRAM> {
-        vector<UniquePtr<ASTNode_Statement>> statements;
+        vector<UniquePtr<ASTNode_Attribute>> attributes{};
+        vector<UniquePtr<ASTNode_Statement>> statements{};
     };
 
     struct ASTNode_VarDecl : public ASTBaseNode<GrammarRule::VAR_DECL, ASTNode_Statement> {

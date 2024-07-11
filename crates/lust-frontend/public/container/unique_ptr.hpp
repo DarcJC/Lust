@@ -55,7 +55,7 @@ namespace lust
         bool is_null() const { return ptr == nullptr; }
 
         operator bool() const {
-            return is_null();
+            return !is_null();
         }
 
         template <typename U>

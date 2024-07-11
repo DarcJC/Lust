@@ -148,6 +148,8 @@ namespace lexer {
 
         // #[
         ATTRIBUTE_START,
+        // #!
+        GLOBAL_ATTRIBUTE_START,
 
         // error
         ERROR,

@@ -28,7 +28,7 @@ namespace grammar
         /**
          * @brief The token consumer
          */
-        void expected(lexer::TerminalTokenType expected_type);
+        bool expected(lexer::TerminalTokenType expected_type, std::string_view failure_msg = {});
 
         /**
          * @brief The token consumer but no cause an error when failure
@@ -52,6 +52,8 @@ namespace grammar
         UniquePtr<ASTNode_FunctionDecl> parse_function_declaration();
 
         vector<UniquePtr<ASTNode_Attribute>> parse_attribute_declaration();
+
+        QualifierName parse_qualifier_name();
     };
 
     lust::UniquePtr<IParser> IParser::create(lexer::TokenStream &token_stream)
@@ -93,14 +95,20 @@ namespace grammar
         return current;
     }
 
-    void Parser::expected(lexer::TerminalTokenType expected_type)
+    bool Parser::expected(lexer::TerminalTokenType expected_type, std::string_view failure_msg)
     {
         if (m_current_token.type == expected_type) {
             m_current_token = next_token();
+            return true;
         } else {
             std::stringstream s;
             s << "Unexpected token. Expected " << lexer::token_type_to_string(expected_type) << ", found " << lexer::token_type_to_string(m_current_token.type) << ".";
+            if (!failure_msg.empty()) {
+                s << "\n\tReason: " << failure_msg;
+            }
+            s << std::endl;
             error(s.str());
+            return false;
         }
     }
 
@@ -117,10 +125,18 @@ namespace grammar
     {
         UniquePtr<ASTNode_Program> node = lust::make_unique<ASTNode_Program>();
         while (m_current_token.type != lexer::TerminalTokenType::END && m_current_token.type != lexer::TerminalTokenType::ERROR) {
-            if (m_current_token.type == lexer::TerminalTokenType::ATTRIBUTE_START) {
+            switch (m_current_token.type)
+            {
+            case lexer::TerminalTokenType::GLOBAL_ATTRIBUTE_START:
+                node->attributes.extend(parse_attribute_declaration());
+                break;
+            case lexer::TerminalTokenType::ATTRIBUTE_START:
                 m_pending_attributes.extend(parse_attribute_declaration());
-            } else {
+                break;
+            
+            default:
                 node->statements.push_back(parse_statement());
+                break;
             }
         }
         return node;
@@ -172,11 +188,56 @@ namespace grammar
 
     vector<UniquePtr<ASTNode_Attribute>> Parser::parse_attribute_declaration()
     {
+        // #[label::label, label2(ident, ident)]
+
         vector<UniquePtr<ASTNode_Attribute>> attributes;
 
         expected(lexer::TerminalTokenType::ATTRIBUTE_START);
 
+        auto parse_item = [&] () -> UniquePtr<ASTNode_Attribute> {
+            auto result = make_unique<ASTNode_Attribute>();
+            result->name = parse_qualifier_name();
+            if (optional(lexer::TerminalTokenType::LPAREN)) {
+                while (m_current_token.type != lexer::TerminalTokenType::RPAREN) {
+                    if (!expected(lexer::TerminalTokenType::IDENT)) {
+                        result->args.push_back(m_current_token.value);
+                        break;
+                    }
+                }
+                expected(lexer::TerminalTokenType::RPAREN);
+            }
+            return result;
+        };
+
+        // Doesn't allow empty attribute declaration
+        attributes.push_back(parse_item());
+
+        while (m_current_token.type == lexer::TerminalTokenType::COMMA) {
+            expected(lexer::TerminalTokenType::COMMA);
+            attributes.push_back(parse_item());
+        }
+
+        expected(lexer::TerminalTokenType::RBRACKET, "Attribute should be closed");
+
         return attributes;
+    }
+
+    QualifierName Parser::parse_qualifier_name()
+    {
+        vector<simple_string> parts;
+        parts.push_back(m_current_token.value);
+        expected(lexer::TerminalTokenType::IDENT);
+
+        while (m_current_token.type == lexer::TerminalTokenType::COLONCOLON) {
+            expected(lexer::TerminalTokenType::COLONCOLON);
+            parts.push_back(m_current_token.value);
+            expected(lexer::TerminalTokenType::IDENT);
+        }
+        
+        return QualifierName {
+            parts.back(),
+            parts.slice(0, parts.size() - 1),
+        };
     }
 }
 }
