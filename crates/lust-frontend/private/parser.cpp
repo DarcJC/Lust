@@ -5,6 +5,8 @@
 #include <sstream>
 #include <utility>
 
+#include "grammar/type_expr.hpp"
+
 namespace lust
 {
 namespace grammar
@@ -23,6 +25,11 @@ namespace grammar
     private:
         /**
          * @brief Notify a parser error and set parser error flag
+         */
+        void error_msg(std::string_view msg);
+
+        /**
+         * @brief Notify a parser error, set parser error flag and comsume current token
          */
         void error(std::string_view msg);
 
@@ -60,13 +67,29 @@ namespace grammar
 
         vector<UniquePtr<ASTNode_Attribute>> parse_attribute_declaration();
 
-        QualifierName parse_qualifier_name();
+        QualifiedName parse_qualifier_name();
 
         Visibility parse_visibility();
 
         UniquePtr<ASTNode_GenericParam> parse_generic_param();
 
-        UniquePtr<ASTNode_Generic> try_parse_generic();
+        vector<UniquePtr<ASTNode_GenericParam>> try_parse_generic_params();
+
+        UniquePtr<ASTNode_TypeExpr_Trivial> parse_trival_type();
+
+        UniquePtr<ASTNode_TypeExpr_Tuple> parse_tuple_type();
+
+        UniquePtr<ASTNode_TypeExpr_Array> parse_array_type();
+
+        UniquePtr<ASTNode_TypeExpr_Reference> parse_reference_type();
+
+        UniquePtr<ASTNode_TypeExpr_Function> parse_function_type();
+
+        UniquePtr<ASTNode_TypeExpr> parse_type_expr();
+
+        UniquePtr<ASTNode_TypeExpr> create_unit_type();
+
+        UniquePtr<ASTNode_InvokeParam> parse_invoke_param();
     };
 
     lust::UniquePtr<IParser> IParser::create(lexer::TokenStream &token_stream)
@@ -91,11 +114,16 @@ namespace grammar
         return m_error_occurred;
     }
 
-    void Parser::error(std::string_view msg)
+    void Parser::error_msg(std::string_view msg)
     {
         m_error_occurred = true;
         lexer::SourceLoc loc = lexer::pos_to_line_and_row(m_token_stream->original_text(), m_current_token.pos);
         std::cerr << "Error occurred while parsing at L" << loc.line << ":" << loc.row << " :\n\t" << msg << "\n";
+    }
+
+    void Parser::error(std::string_view msg)
+    {
+        error_msg(msg);
         
         // Try to recover
         m_current_token = next_token();
@@ -233,11 +261,34 @@ namespace grammar
         expected(lexer::TerminalTokenType::FN);
         function->identifier = m_current_token.value;
         expected(lexer::TerminalTokenType::IDENT);
-        function->generic = try_parse_generic();
+        function->generic_params = try_parse_generic_params();
 
         expected(lexer::TerminalTokenType::LPAREN);
         
-        expected(lexer::TerminalTokenType::RPAREN);
+        do {
+
+            if (auto param = parse_invoke_param(); param) {
+                function->params->params.push_back(param);
+            } else {
+                break;
+            }
+
+            if (optional(lexer::TerminalTokenType::RPAREN)) {
+                break;
+            } else if (optional(lexer::TerminalTokenType::COMMA)) {
+                continue;
+            } else {
+                error("Function parameter list expected ',' and ')'");
+                break;
+            }
+
+        } while(true);
+        
+        if (optional(lexer::TerminalTokenType::ARROW)) {
+            function->ret_type = parse_type_expr();
+        } else {
+            function->ret_type = create_unit_type();
+        }
 
         return function;
     }
@@ -278,7 +329,7 @@ namespace grammar
         return attributes;
     }
 
-    QualifierName Parser::parse_qualifier_name()
+    QualifiedName Parser::parse_qualifier_name()
     {
         vector<simple_string> parts;
         parts.push_back(m_current_token.value);
@@ -290,7 +341,7 @@ namespace grammar
             expected(lexer::TerminalTokenType::IDENT);
         }
         
-        return QualifierName {
+        return QualifiedName {
             parts.back(),
             parts.slice(0, parts.size() - 1),
         };
@@ -342,18 +393,177 @@ namespace grammar
         return res;
     }
 
-    UniquePtr<ASTNode_Generic> Parser::try_parse_generic()
+    vector<UniquePtr<ASTNode_GenericParam>> Parser::try_parse_generic_params()
     {
         if (optional(lexer::TerminalTokenType::LT)) {
-            UniquePtr<ASTNode_Generic> res = make_unique<ASTNode_Generic>();
+            vector<UniquePtr<ASTNode_GenericParam>> res;
 
             do {
                 auto param = parse_generic_param();
-                res->params.push_back(std::move(param));
+                res.push_back(std::move(param));
                 if (!optional(lexer::TerminalTokenType::COMMA))
                     break;
-            } while (lexer::TerminalTokenType::GT != m_current_token.type);
+            } while (optional(lexer::TerminalTokenType::GT));
+
+            return res;
         }
+        return {};
+    }
+
+    UniquePtr<ASTNode_TypeExpr_Trivial> Parser::parse_trival_type()
+    {
+
+        QualifiedName type_name = parse_qualifier_name();
+
+        if (m_current_token.type == lexer::TerminalTokenType::LT) {
+            UniquePtr<ASTNode_TypeExpr_Generic> res = make_unique<ASTNode_TypeExpr_Generic>();
+            res->base_type = type_name;
+            res->params = try_parse_generic_params();
+            expected(lexer::TerminalTokenType::GT);
+        }
+
+        UniquePtr<ASTNode_TypeExpr_Trivial> res = make_unique<ASTNode_TypeExpr_Trivial>();
+
+        res->type_name = type_name;
+
+        return res;
+    }
+
+    UniquePtr<ASTNode_TypeExpr_Tuple> Parser::parse_tuple_type()
+    {
+        UniquePtr<ASTNode_TypeExpr_Tuple> res = make_unique<ASTNode_TypeExpr_Tuple>();
+
+        expected(lexer::TerminalTokenType::LPAREN);
+
+        do {
+            if (auto type_exp = parse_type_expr(); type_exp) {
+                res->composite_types.push_back(std::move(type_exp));
+            } else {
+                break;
+            }
+
+            if (optional(lexer::TerminalTokenType::COMMA)) {
+                continue;
+            } else if (optional(lexer::TerminalTokenType::RPAREN)) {
+                break;
+            } else {
+                error("Expected ',' or ')' in tuple list");
+                return nullptr;
+            }
+
+        } while (true);
+
+        return res;
+    }
+
+    UniquePtr<ASTNode_TypeExpr_Array> Parser::parse_array_type()
+    {
+        UniquePtr<ASTNode_TypeExpr_Array> res = make_unique<ASTNode_TypeExpr_Array>();
+
+        expected(lexer::TerminalTokenType::LBRACKET);
+
+        res->array_type = parse_type_expr();
+
+        expected(lexer::TerminalTokenType::SEMICOLON);
+
+        std::string num_string = m_current_token.get_value();
+        if (expected(lexer::TerminalTokenType::INT, "It must be an integer to describe array size")) {
+            Number<size_t> num = convert_string_to_number<size_t>(num_string);
+            if (num.is_null) {
+                error_msg("Weird integer, it might cause undefined behavior");
+            }
+            res->array_size = num.value;
+        }
+
+        expected(lexer::TerminalTokenType::RBRACKET);
+
+        return res;
+    }
+
+    UniquePtr<ASTNode_TypeExpr_Reference> Parser::parse_reference_type()
+    {
+        UniquePtr<ASTNode_TypeExpr_Reference> res = make_unique<ASTNode_TypeExpr_Reference>();
+
+        expected(lexer::TerminalTokenType::BITAND);
+
+        res->referenced_type = parse_type_expr();
+
+        return res;
+    }
+
+    UniquePtr<ASTNode_TypeExpr_Function> Parser::parse_function_type()
+    {
+        UniquePtr<ASTNode_TypeExpr_Function> res = make_unique<ASTNode_TypeExpr_Function>();
+
+        expected(lexer::TerminalTokenType::FN);
+        expected(lexer::TerminalTokenType::LPAREN);
+
+        if (!optional(lexer::TerminalTokenType::RPAREN)) {
+            do {
+                if (auto type_exp = parse_type_expr(); type_exp) {
+                    res->param_types.push_back(type_exp);
+                } else {
+                    break;
+                }
+
+                if (optional(lexer::TerminalTokenType::COMMA)) {
+                    continue;
+                } else if (optional(lexer::TerminalTokenType::RPAREN)) {
+                    break;
+                } else {
+                    error("Expected ',' or ')' in function type parameter list");
+                    return nullptr;
+                }
+
+            } while (true);
+        }
+
+        if (optional(lexer::TerminalTokenType::ARROW)) {
+            res->return_type = parse_type_expr();
+        } else {
+            res->return_type = create_unit_type();
+        }
+
+        return res;
+    }
+
+    UniquePtr<ASTNode_TypeExpr> Parser::parse_type_expr()
+    {
+        if (lexer::TerminalTokenType::FN == m_current_token.type) {
+            return UniquePtr<ASTNode_TypeExpr>(parse_function_type());
+        } else if (lexer::TerminalTokenType::LBRACKET == m_current_token.type) {
+            return UniquePtr<ASTNode_TypeExpr>(parse_array_type());
+        } else if (lexer::TerminalTokenType::LPAREN == m_current_token.type) {
+            return UniquePtr<ASTNode_TypeExpr>(parse_tuple_type());
+        } else if (lexer::TerminalTokenType::BITAND == m_current_token.type) {
+            return UniquePtr<ASTNode_TypeExpr>(parse_reference_type());
+        } else {
+            return UniquePtr<ASTNode_TypeExpr>(parse_trival_type());
+        }
+
+        return nullptr;
+    }
+
+    UniquePtr<ASTNode_TypeExpr> Parser::create_unit_type()
+    {
+        return make_unique<ASTNode_TypeExpr>();
+    }
+
+    UniquePtr<ASTNode_InvokeParam> Parser::parse_invoke_param()
+    {
+        UniquePtr<ASTNode_InvokeParam> res = make_unique<ASTNode_InvokeParam>();
+
+        if (expected(lexer::TerminalTokenType::IDENT)) {
+            res->identifier = m_current_token.value;
+        }
+
+        expected(lexer::TerminalTokenType::COLON);
+
+        if (auto expr = parse_type_expr(); expr) {
+            res->type = parse_type_expr();
+            return res;
+        }
+
         return nullptr;
     }
 }

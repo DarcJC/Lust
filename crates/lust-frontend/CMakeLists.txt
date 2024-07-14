@@ -5,6 +5,8 @@ set(LUST_FRONTEND_SOURCES
     private/misc.cpp
     private/grammar.cpp
     private/parser.cpp
+    
+    private/grammar/type_expr.cpp
 )
 
 set(LUST_CONTAINER_SOURCES
@@ -31,9 +33,10 @@ target_include_directories(LustFrontend
         public
     PRIVATE
         private
+        public/lust
 )
 
 target_set_api_macro(LustFrontend)
 target_precompile_headers(LustFrontend PUBLIC
-    public/public_pch.hpp
+    public/lust/public_pch.hpp
 )

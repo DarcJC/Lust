@@ -7,6 +7,7 @@
 #include "container/simple_string.hpp"
 #include "container/unique_ptr.hpp"
 #include "grammar.hpp"
+#include "grammar/type_expr.hpp"
 
 namespace lust {
     template <typename T>
@@ -201,8 +202,10 @@ namespace lust {
     template class vector<simple_string>;
     template class vector<UniquePtr<grammar::ASTNode_Statement>>;
     template class vector<UniquePtr<grammar::ASTNode_Attribute>>;
-    template class vector<grammar::QualifierName>;
+    template class vector<grammar::QualifiedName>;
     template class vector<UniquePtr<grammar::ASTNode_GenericParam>>;
+    template class vector<UniquePtr<grammar::ASTNode_TypeExpr>>;
+    template class vector<UniquePtr<grammar::ASTNode_InvokeParam>>;
     // 添加其他需要支持的类型
 
 } // namespace lust

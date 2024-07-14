@@ -161,6 +161,16 @@ namespace lexer {
         SUPER,
         // mod
         MOD,
+        // as
+        AS,
+        // static
+        STATIC,
+        // ref
+        REF,
+        // true
+        TRUE,
+        // false
+        FALSE,
 
         // error
         ERROR,

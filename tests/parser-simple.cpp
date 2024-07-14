@@ -1,9 +1,4 @@
-#include "single_file_test.hpp"
-#include "parser.hpp"
-#include "lexer.hpp"
-
-const char test_data[] = 
-R"LUST(
+const char test_data[] = R"LUST(
 
 /// This is a COMMENT
 #[label::label, label2()] // Comment here
@@ -27,6 +22,11 @@ impl Display for Foo<u8> {
 }
 
 )LUST";
+
+#include "single_file_test.hpp"
+#include "lust/parser.hpp"
+#include "lust/lexer.hpp"
+
 
 void entry() {
     lust::lexer::TokenStream lexer = lust::lexer::ITokenizer::create(std::string_view(test_data, sizeof(test_data)));

@@ -296,12 +296,17 @@ token_exit:
             { "crate", TerminalTokenType::CRATE },
             { "super", TerminalTokenType::SUPER },
             { "mod", TerminalTokenType::MOD },
+            { "as", TerminalTokenType::AS },
+            { "static", TerminalTokenType::STATIC },
+            { "ref", TerminalTokenType::REF },
+            { "true", TerminalTokenType::TRUE },
+            { "false", TerminalTokenType::FALSE },
         };
         if (auto it = keywords.find(std::string(text)); it != keywords.end()) {
             return it->second;
         }
 
-        return m_previous_token_type == TerminalTokenType::COLON ? TerminalTokenType::TYPE : TerminalTokenType::IDENT;
+        return TerminalTokenType::IDENT;
     }
 
     bool Tokenizer::match_next(char expected)
@@ -517,6 +522,12 @@ token_exit:
             case TerminalTokenType::PUB: return "PUB";
             case TerminalTokenType::CRATE: return "CRATE";
             case TerminalTokenType::SUPER: return "SUPER";
+            case TerminalTokenType::MOD: return "MOD";
+            case TerminalTokenType::AS: return "AS";
+            case TerminalTokenType::STATIC: return "STATIC";
+            case TerminalTokenType::REF: return "REF";
+            case TerminalTokenType::TRUE: return "TURE";
+            case TerminalTokenType::FALSE: return "FALSE";
             case TerminalTokenType::ERROR: return "ERROR";
             case TerminalTokenType::MAX_NUM: return "MAX_NUM";
             default: return "UNKNOWN";

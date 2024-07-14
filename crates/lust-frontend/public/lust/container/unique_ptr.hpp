@@ -22,6 +22,12 @@ namespace lust
         }
 
         template <typename U>
+        UniquePtr(UniquePtr<U>&& other) noexcept {
+            ptr = other.ptr;
+            other.ptr = nullptr;
+        }
+
+        template <typename U>
         UniquePtr<T>& operator=(UniquePtr<U>&& moving) noexcept {
             if ((void*)this != (void*)&moving) {
                 delete ptr;

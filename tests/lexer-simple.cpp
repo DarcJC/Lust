@@ -1,5 +1,5 @@
 #include "single_file_test.hpp"
-#include "lexer.hpp"
+#include "lust/lexer.hpp"
 
 const char test_data[] = 
 R"LUST(

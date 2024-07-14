@@ -8,6 +8,13 @@ namespace lust
 {
 namespace grammar
 {
+    struct ASTNode_TypeExpr;
+    struct ASTNode_TypeExpr_Trival;
+    struct ASTNode_TypeExpr_Reference;
+    struct ASTNode_TypeExpr_Tuple;
+    struct ASTNode_TypeExpr_Generic;
+    struct ASTNode_TypeExpr_Function;
+
     enum class GrammarRule : uint32_t {
         NONE,
 
@@ -19,6 +26,9 @@ namespace grammar
         ATTRIBUTE,
         GENERIC_PARAM,
         GENERIC,
+        INVOKE_PARAM,
+        TYPE_EXPR,
+        INVOKE_PARAM_LIST,
 
         MAX_NUM,
     };
@@ -45,23 +55,28 @@ namespace grammar
         }
     };
 
-    struct QualifierName { 
+    struct QualifiedName { 
         simple_string name;
         vector<simple_string> name_spaces;
     };
 
+    struct ASTNode_InvokeParam : public ASTBaseNode<GrammarRule::INVOKE_PARAM> {
+        UniquePtr<ASTNode_TypeExpr> type;
+        simple_string identifier;
+    };
+
+    struct ASTNode_ParamList : public ASTBaseNode<GrammarRule::INVOKE_PARAM_LIST> {
+        vector<UniquePtr<ASTNode_InvokeParam>> params;
+    };
+
     struct ASTNode_Attribute : public ASTBaseNode<GrammarRule::ATTRIBUTE> {
-        QualifierName name;
+        QualifiedName name;
         vector<simple_string> args;
     };
 
     struct ASTNode_GenericParam : public ASTBaseNode<GrammarRule::GENERIC_PARAM> {
         simple_string identifier;
-        vector<QualifierName> constraints;
-    };
-
-    struct ASTNode_Generic : public ASTBaseNode<GrammarRule::GENERIC> {
-        vector<UniquePtr<ASTNode_GenericParam>> params;
+        vector<QualifiedName> constraints;
     };
 
     struct ASTNode_Statement : public ASTBaseNode<GrammarRule::STATEMENT> {
@@ -83,7 +98,9 @@ namespace grammar
     struct ASTNode_FunctionDecl : public ASTBaseNode<GrammarRule::FUNCTION_DECL, ASTNode_Statement> {
         bool is_async = false;
         simple_string identifier;
-        UniquePtr<ASTNode_Generic> generic;
+        vector<UniquePtr<ASTNode_GenericParam>> generic_params;
+        UniquePtr<ASTNode_ParamList> params;
+        UniquePtr<ASTNode_TypeExpr> ret_type;
     };
 }
 }
