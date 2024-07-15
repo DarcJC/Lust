@@ -8,7 +8,7 @@ namespace lust
 namespace grammar
 {
 
-    class IParser {
+    class LUSTFRONTEND_API IParser {
     public:
         virtual ~IParser() = default;
 
