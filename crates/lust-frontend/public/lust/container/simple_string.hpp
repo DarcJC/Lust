@@ -5,7 +5,7 @@
 
 namespace lust
 {
-    class simple_string {
+    class LUSTFRONTEND_API simple_string {
     public:
         simple_string();
         simple_string(const char* s);

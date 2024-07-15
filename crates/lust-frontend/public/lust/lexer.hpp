@@ -177,7 +177,7 @@ namespace lexer {
         MAX_NUM,
     };
 
-    extern const char* token_type_to_string(TerminalTokenType type);
+    LUSTFRONTEND_API extern const char* token_type_to_string(TerminalTokenType type);
 
     struct SourceLoc {
         lust::simple_string filename = "<eval>";
@@ -199,7 +199,7 @@ namespace lexer {
         /**
          * @note Use this interface to ensure ABI compatibility
          */
-        const char* get_value() const;
+        LUSTFRONTEND_API const char* get_value() const;
     };
 
     class LUSTFRONTEND_API TokenStream final {
