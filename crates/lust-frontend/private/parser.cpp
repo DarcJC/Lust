@@ -45,14 +45,11 @@ namespace grammar
          */
         bool optional(lexer::TerminalTokenType expected_type);
 
-        Visibility consume_visibility();
-
         vector<UniquePtr<ASTNode_Attribute>> consume_attributes();
     private:
         lexer::TokenStream& m_token_stream;
         lexer::Token m_current_token{};
         vector<UniquePtr<ASTNode_Attribute>> m_pending_attributes;
-        Visibility m_scope_visibility = Visibility::DEFAULT;
 
         bool m_error_occurred = false;
 
@@ -60,6 +57,8 @@ namespace grammar
         UniquePtr<ASTNode_Program> parse_program();
     
         UniquePtr<ASTNode_Statement> parse_statement();
+
+        UniquePtr<ASTNode_Statement> parse_statement_pub_prefix();
 
         UniquePtr<ASTNode_VarDecl> parse_variable_declaration();
 
@@ -100,7 +99,6 @@ namespace grammar
     Parser::Parser(lexer::TokenStream &token_stream)
         : m_token_stream(token_stream)
         , m_current_token(next_token())
-        , m_scope_visibility(Visibility::DEFAULT)
     {
     }
 
@@ -168,15 +166,6 @@ namespace grammar
         return false;
     }
 
-    Visibility Parser::consume_visibility()
-    {
-        Visibility res = m_scope_visibility;
-
-        m_scope_visibility = Visibility::DEFAULT;
-
-        return res;
-    }
-
     vector<UniquePtr<ASTNode_Attribute>> Parser::consume_attributes()
     {
         vector<UniquePtr<ASTNode_Attribute>> res = std::move(m_pending_attributes);
@@ -197,9 +186,6 @@ namespace grammar
                 break;
             case lexer::TerminalTokenType::ATTRIBUTE_START:
                 m_pending_attributes.extend(parse_attribute_declaration());
-                break;
-            case lexer::TerminalTokenType::PUB:
-                m_scope_visibility = parse_visibility();
                 break;
             
             default:
@@ -224,6 +210,8 @@ namespace grammar
         case lexer::TerminalTokenType::FN:
             statement = parse_function_declaration();
             break;
+        case lexer::TerminalTokenType::PUB:
+            statement = parse_statement_pub_prefix();
         
         default:
             error("Invalid statement");
@@ -235,6 +223,14 @@ namespace grammar
             m_pending_attributes.clear();
         }
 
+        return statement;
+    }
+
+    UniquePtr<ASTNode_Statement> Parser::parse_statement_pub_prefix()
+    {
+        Visibility visibility = parse_visibility();
+        UniquePtr<ASTNode_Statement> statement = parse_statement();
+        statement->visibility = visibility;
         return statement;
     }
 
@@ -350,10 +346,6 @@ namespace grammar
     Visibility Parser::parse_visibility()
     {
         Visibility res = Visibility::PUBLIC;
-
-        if (m_scope_visibility != Visibility::DEFAULT) {
-            error("Duplicated visibility specifier.");
-        }
 
         expected(lexer::TerminalTokenType::PUB);
 
