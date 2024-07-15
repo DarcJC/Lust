@@ -286,7 +286,16 @@ namespace grammar
             function->ret_type = create_unit_type();
         }
 
-        return function;
+        if (optional(lexer::TerminalTokenType::SEMICOLON)) {
+            return function;
+        } else if (optional(lexer::TerminalTokenType::LBRACE)) {
+            // Parse function body
+
+            return function;
+        }
+
+        error("Unterminated function declaration");
+        return nullptr;
     }
 
     vector<UniquePtr<ASTNode_Attribute>> Parser::parse_attribute_declaration()
@@ -427,23 +436,25 @@ namespace grammar
 
         expected(lexer::TerminalTokenType::LPAREN);
 
-        do {
-            if (auto type_exp = parse_type_expr(); type_exp) {
-                res->composite_types.push_back(std::move(type_exp));
-            } else {
-                break;
-            }
+        if (!optional(lexer::TerminalTokenType::RPAREN)) {
+            do {
+                if (auto type_exp = parse_type_expr(); type_exp) {
+                    res->composite_types.push_back(std::move(type_exp));
+                } else {
+                    break;
+                }
 
-            if (optional(lexer::TerminalTokenType::COMMA)) {
-                continue;
-            } else if (optional(lexer::TerminalTokenType::RPAREN)) {
-                break;
-            } else {
-                error("Expected ',' or ')' in tuple list");
-                return nullptr;
-            }
+                if (optional(lexer::TerminalTokenType::COMMA)) {
+                    continue;
+                } else if (optional(lexer::TerminalTokenType::RPAREN)) {
+                    break;
+                } else {
+                    error("Expected ',' or ')' in tuple list");
+                    return nullptr;
+                }
 
-        } while (true);
+            } while (true);
+        }
 
         return res;
     }
@@ -529,10 +540,11 @@ namespace grammar
             return UniquePtr<ASTNode_TypeExpr>(parse_tuple_type());
         } else if (lexer::TerminalTokenType::BITAND == m_current_token.type) {
             return UniquePtr<ASTNode_TypeExpr>(parse_reference_type());
-        } else {
+        } else if (lexer::TerminalTokenType::IDENT == m_current_token.type) {
             return UniquePtr<ASTNode_TypeExpr>(parse_trival_type());
         }
 
+        error("");
         return nullptr;
     }
 
@@ -552,7 +564,7 @@ namespace grammar
         expected(lexer::TerminalTokenType::COLON);
 
         if (auto expr = parse_type_expr(); expr) {
-            res->type = parse_type_expr();
+            res->type = std::move(expr);
             return res;
         }
 
