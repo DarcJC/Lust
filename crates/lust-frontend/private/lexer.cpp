@@ -353,7 +353,7 @@ token_exit:
             next_char();
         }
 
-        std::string_view text = m_text_to_parse.substr(start, m_text_cursor - start);
+        std::string text = m_text_to_parse.substr(start, m_text_cursor - start);
         TerminalTokenType type = lookup_keyword(text);
 
         return make_token(type, text);
@@ -376,7 +376,7 @@ token_exit:
             is_float = true;
         }
 
-        std::string_view text = m_text_to_parse.substr(start, m_text_cursor - start);
+        std::string text = m_text_to_parse.substr(start, m_text_cursor - start);
 
         if (is_float) {
             return make_token(TerminalTokenType::FLOAT, text);
@@ -412,7 +412,7 @@ token_exit:
             return error_token("Unterminated string literal");
         }
 
-        std::string_view text = m_text_to_parse.substr(start, m_text_cursor - start);
+        std::string text = m_text_to_parse.substr(start, m_text_cursor - start);
         // Skip the closing quote
         next_char();
 
@@ -442,7 +442,7 @@ token_exit:
             }
         }
 
-        // std::string_view text = m_text_to_parse.substr(start, m_text_cursor - start);
+        // std::string text = m_text_to_parse.substr(start, m_text_cursor - start);
 
         return make_token(TerminalTokenType::COMMENTVAL, val);
     }
