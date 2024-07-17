@@ -13,7 +13,7 @@ if (LUST_BUILD_AST_VISUALIZER)
         add_executable(Lust::ASTVisualizer ALIAS LustASTVisualizer)
 
         target_link_libraries(LustASTVisualizer PRIVATE gvc cgraph cxxopts)
-        target_link_libraries(LustASTVisualizer PRIVATE Lust::Frontend)
+        target_link_libraries(LustASTVisualizer PRIVATE Lust::Defines Lust::Frontend)
     else() 
         message(WARNING "Can't locate graphviz")
     endif()

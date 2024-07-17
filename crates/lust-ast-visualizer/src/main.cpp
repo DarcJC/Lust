@@ -14,6 +14,7 @@
 #include <sstream>
 #include <exception>
 #include <atomic>
+#include <string>
 
 std::string read_stdin() {
     std::stringstream ss;
@@ -46,10 +47,13 @@ int main(int argc, char* argv[]) {
         options.add_options("input")
             ("f,file", "Read from file", cxxopts::value<std::string>())
         ;
+        options.add_options("output")
+            ("o,output", "Output image path", cxxopts::value<std::string>()->default_value("output.png"))
+        ;
         auto cli_args = options.parse(argc, argv);
 
         if (cli_args.count("version")) {
-            std::cout << "Lust ASTVisualizer v1.0.0" << std::endl;
+            std::cout << "Lust ASTVisualizer v" << LUST_VERSION << std::endl;
             return 0;
         } else if (cli_args.count("help")) {
             std::cout << options.help() << std::endl;
@@ -82,7 +86,7 @@ int main(int argc, char* argv[]) {
             add_nodes(root_node, program->collect_self_nodes());
 
             gvLayout(gv_context, graph, "dot");
-            gvRenderFilename(gv_context, graph, "png", "output.png");
+            gvRenderFilename(gv_context, graph, "png", cli_args["output"].as<std::string>().c_str());
 
             gvFreeLayout(gv_context, graph);
             agclose(graph);

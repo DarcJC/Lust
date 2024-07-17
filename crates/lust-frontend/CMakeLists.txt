@@ -40,3 +40,7 @@ target_set_api_macro(LustFrontend)
 target_precompile_headers(LustFrontend PUBLIC
     public/lust/public_pch.hpp
 )
+
+target_link_libraries(LustFrontend PUBLIC
+    Lust::Defines
+)
