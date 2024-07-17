@@ -1,5 +1,7 @@
 #include "cxxopts/cxxopts.h"
 #include "graphviz/gvc.h"
+#include "graphviz/cgraph.h"
+#include "graphviz/gvcext.h"
 #include "lust/container/unique_ptr.hpp"
 #include "lust/container/vector.hpp"
 #include "lust/grammar.hpp"
@@ -7,8 +9,6 @@
 #include "lust/parser.hpp"
 #include <exception>
 #include <functional>
-#include <graphviz/cgraph.h>
-#include <graphviz/gvcext.h>
 #include <iostream>
 #include <cstdio>
 #include <sstream>
