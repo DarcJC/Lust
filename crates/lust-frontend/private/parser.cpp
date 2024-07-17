@@ -179,12 +179,17 @@ namespace grammar
     UniquePtr<ASTNode_Program> Parser::parse_program()
     {
         UniquePtr<ASTNode_Program> node = lust::make_unique<ASTNode_Program>();
-        while (m_current_token.type != lexer::TerminalTokenType::END && m_current_token.type != lexer::TerminalTokenType::ERROR) {
+        while (true) {
             switch (m_current_token.type)
             {
+            case lexer::TerminalTokenType::ERROR:
+            case lexer::TerminalTokenType::END:
+                return node;
+
             case lexer::TerminalTokenType::GLOBAL_ATTRIBUTE_START:
                 node->attributes.extend(parse_attribute_declaration());
                 break;
+
             case lexer::TerminalTokenType::ATTRIBUTE_START:
                 m_pending_attributes.extend(parse_attribute_declaration());
                 break;
@@ -213,6 +218,7 @@ namespace grammar
             break;
         case lexer::TerminalTokenType::PUB:
             statement = parse_statement_pub_prefix();
+            break;
         
         default:
             error("Invalid statement");
@@ -427,7 +433,6 @@ namespace grammar
             UniquePtr<ASTNode_TypeExpr_Generic> res = make_unique<ASTNode_TypeExpr_Generic>();
             res->base_type = type_name;
             res->params = try_parse_generic_params();
-            expected(lexer::TerminalTokenType::GT);
         }
 
         UniquePtr<ASTNode_TypeExpr_Trivial> res = make_unique<ASTNode_TypeExpr_Trivial>();
