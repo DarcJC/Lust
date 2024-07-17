@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(CMakeDependentOption)
 include(GenerateExportHeader)
+include(CheckIncludeFile)
 include_directories(
         AFTER ${CMAKE_BINARY_DIR}/export_headers
 )
@@ -23,6 +24,7 @@ set(LUST_CMAKE_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR})
 include(cmake/TargetHelper.cmake)
 
 # Add targets
+add_subdirectory(thirdparty)
 add_subdirectory(crates)
 
 option(LUST_ENABLE_TESTS "" ON)

@@ -50,12 +50,16 @@ namespace grammar
         bool is_unit_type() override;
 
         vector<UniquePtr<ASTNode_TypeExpr>> composite_types;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_TypeExpr_Reference : public ASTNode_TypeExpr {
         bool is_reference_type() override;
 
         UniquePtr<ASTNode_TypeExpr> referenced_type;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_TypeExpr_Generic : public ASTNode_TypeExpr {
@@ -63,6 +67,8 @@ namespace grammar
 
         QualifiedName base_type;
         vector<UniquePtr<ASTNode_GenericParam>> params;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_TypeExpr_Function : public ASTNode_TypeExpr {
@@ -70,6 +76,8 @@ namespace grammar
 
         vector<UniquePtr<ASTNode_TypeExpr>> param_types;
         UniquePtr<ASTNode_TypeExpr> return_type;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_TypeExpr_Array : public ASTNode_TypeExpr {
@@ -77,6 +85,8 @@ namespace grammar
 
         UniquePtr<ASTNode_TypeExpr> array_type;
         size_t array_size;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
 }

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "lexer.hpp"
 #include "container/unique_ptr.hpp"
 #include "container/vector.hpp"
+#include "lustfrontend_export.h"
 
 namespace lust
 {
@@ -33,6 +33,8 @@ namespace grammar
         MAX_NUM,
     };
 
+    LUSTFRONTEND_API extern const char* grammar_rule_to_name(GrammarRule rule);
+
     enum class Visibility : uint8_t {
         DEFAULT = 0,
         SELF = 0,
@@ -41,11 +43,13 @@ namespace grammar
         PUBLIC = 3,
     };
 
-    struct IASTNode {
+    struct LUSTFRONTEND_API IASTNode {
     public:
         virtual ~IASTNode();
 
         virtual GrammarRule get_type() const = 0;
+
+        virtual vector<const IASTNode*> collect_self_nodes() const;
     };
 
     template <GrammarRule Rule, class Parent = IASTNode>
@@ -63,36 +67,51 @@ namespace grammar
     struct ASTNode_InvokeParam : public ASTBaseNode<GrammarRule::INVOKE_PARAM> {
         UniquePtr<ASTNode_TypeExpr> type;
         simple_string identifier;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_ParamList : public ASTBaseNode<GrammarRule::INVOKE_PARAM_LIST> {
         vector<UniquePtr<ASTNode_InvokeParam>> params;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_Attribute : public ASTBaseNode<GrammarRule::ATTRIBUTE> {
         QualifiedName name;
         vector<simple_string> args;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_GenericParam : public ASTBaseNode<GrammarRule::GENERIC_PARAM> {
         simple_string identifier;
         vector<QualifiedName> constraints;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_Statement : public ASTBaseNode<GrammarRule::STATEMENT> {
         vector<UniquePtr<ASTNode_Attribute>> attributes{};
         Visibility visibility;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_ExprStatement : public ASTBaseNode<GrammarRule::EXPR_STATEMENT, ASTNode_Statement> {
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_Program : public ASTBaseNode<GrammarRule::PROGRAM> {
         vector<UniquePtr<ASTNode_Attribute>> attributes{};
         vector<UniquePtr<ASTNode_Statement>> statements{};
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_VarDecl : public ASTBaseNode<GrammarRule::VAR_DECL, ASTNode_Statement> {
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_FunctionDecl : public ASTBaseNode<GrammarRule::FUNCTION_DECL, ASTNode_Statement> {
@@ -101,6 +120,8 @@ namespace grammar
         vector<UniquePtr<ASTNode_GenericParam>> generic_params;
         UniquePtr<ASTNode_ParamList> params;
         UniquePtr<ASTNode_TypeExpr> ret_type;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 }
 }

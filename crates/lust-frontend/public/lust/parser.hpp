@@ -1,5 +1,6 @@
 #pragma once
 
+#include "lexer.hpp"
 #include "grammar.hpp"
 #include "container/unique_ptr.hpp"
 

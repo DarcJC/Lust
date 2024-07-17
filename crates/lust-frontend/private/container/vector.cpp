@@ -206,6 +206,7 @@ namespace lust {
     template class vector<UniquePtr<grammar::ASTNode_GenericParam>>;
     template class vector<UniquePtr<grammar::ASTNode_TypeExpr>>;
     template class vector<UniquePtr<grammar::ASTNode_InvokeParam>>;
+    template class vector<const grammar::IASTNode*>;
     // 添加其他需要支持的类型
 
 } // namespace lust

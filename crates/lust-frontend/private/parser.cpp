@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "grammar/type_expr.hpp"
+#include "lexer.hpp"
 
 namespace lust
 {
@@ -304,7 +305,11 @@ namespace grammar
 
         vector<UniquePtr<ASTNode_Attribute>> attributes;
 
-        expected(lexer::TerminalTokenType::ATTRIBUTE_START);
+        if (optional(lexer::TerminalTokenType::GLOBAL_ATTRIBUTE_START)) {
+            expected(lexer::TerminalTokenType::LBRACKET);
+        } else {
+            expected(lexer::TerminalTokenType::ATTRIBUTE_START);
+        }
 
         auto parse_item = [&] () -> UniquePtr<ASTNode_Attribute> {
             auto result = make_unique<ASTNode_Attribute>();
@@ -402,8 +407,10 @@ namespace grammar
             do {
                 auto param = parse_generic_param();
                 res.push_back(std::move(param));
-                if (!optional(lexer::TerminalTokenType::COMMA))
+                if (!optional(lexer::TerminalTokenType::COMMA)) {
+                    expected(lexer::TerminalTokenType::GT);
                     break;
+                }
             } while (optional(lexer::TerminalTokenType::GT));
 
             return res;
