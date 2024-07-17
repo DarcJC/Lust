@@ -5,6 +5,8 @@
 #include <sstream>
 #include <utility>
 
+#include "container/unique_ptr.hpp"
+#include "grammar.hpp"
 #include "grammar/type_expr.hpp"
 #include "lexer.hpp"
 
@@ -90,6 +92,8 @@ namespace grammar
         UniquePtr<ASTNode_TypeExpr> create_unit_type();
 
         UniquePtr<ASTNode_InvokeParam> parse_invoke_param();
+
+        UniquePtr<ASTNode_Block> parse_code_block();
     };
 
     lust::UniquePtr<IParser> IParser::create(lexer::TokenStream &token_stream)
@@ -219,6 +223,9 @@ namespace grammar
         case lexer::TerminalTokenType::PUB:
             statement = parse_statement_pub_prefix();
             break;
+        case lexer::TerminalTokenType::LBRACE:
+            statement = parse_code_block();
+            break;
         
         default:
             error("Invalid statement");
@@ -295,8 +302,8 @@ namespace grammar
 
         if (optional(lexer::TerminalTokenType::SEMICOLON)) {
             return function;
-        } else if (optional(lexer::TerminalTokenType::LBRACE)) {
-            // Parse function body
+        } else if (lexer::TerminalTokenType::LBRACE == m_current_token.type) {
+            function->body = parse_code_block();
 
             return function;
         }
@@ -581,6 +588,18 @@ namespace grammar
         }
 
         return nullptr;
+    }
+
+    UniquePtr<ASTNode_Block> Parser::parse_code_block() {
+        UniquePtr<ASTNode_Block> res = make_unique<ASTNode_Block>();
+
+        expected(lexer::TerminalTokenType::LBRACE);
+
+        while (!optional(lexer::TerminalTokenType::RBRACE)) {
+            res->statements.push_back(parse_statement());
+        }
+
+        return res;
     }
 }
 }

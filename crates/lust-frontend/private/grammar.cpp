@@ -21,6 +21,7 @@ namespace grammar
             case GrammarRule::INVOKE_PARAM: return "INVOKE_PARAM";
             case GrammarRule::TYPE_EXPR: return "TYPE_EXPR";
             case GrammarRule::INVOKE_PARAM_LIST: return "INVOKE_PARAM_LIST";
+            case GrammarRule::BLOCK: return "BLOCK";
 
             default:
                 break;
@@ -96,5 +97,13 @@ namespace grammar
         return res;
     }
 
+    vector<const IASTNode*> ASTNode_Block::collect_self_nodes() const {
+        vector<const IASTNode*> res;
+        res.extend(ASTNode_Statement::collect_self_nodes());
+        for (const UniquePtr<ASTNode_Statement>& statement : statements) {
+            res.push_back(statement.get());
+        }
+        return res;
+    }
 }
 }

@@ -14,6 +14,7 @@ namespace grammar
     struct ASTNode_TypeExpr_Tuple;
     struct ASTNode_TypeExpr_Generic;
     struct ASTNode_TypeExpr_Function;
+    struct ASTNode_Block;
 
     enum class GrammarRule : uint32_t {
         NONE,
@@ -29,6 +30,7 @@ namespace grammar
         INVOKE_PARAM,
         TYPE_EXPR,
         INVOKE_PARAM_LIST,
+        BLOCK,
 
         MAX_NUM,
     };
@@ -120,6 +122,13 @@ namespace grammar
         vector<UniquePtr<ASTNode_GenericParam>> generic_params;
         UniquePtr<ASTNode_ParamList> params;
         UniquePtr<ASTNode_TypeExpr> ret_type;
+        UniquePtr<ASTNode_Block> body;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
+    };
+
+    struct ASTNode_Block : public ASTBaseNode<GrammarRule::BLOCK, ASTNode_Statement> {
+        vector<UniquePtr<ASTNode_Statement>> statements{};
 
         vector<const IASTNode*> collect_self_nodes() const override;
     };
