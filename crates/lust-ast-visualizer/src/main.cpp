@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <sstream>
 #include <exception>
+#include <atomic>
 
 std::string read_stdin() {
     std::stringstream ss;
@@ -23,11 +24,18 @@ std::string read_stdin() {
     return ss.str();
 }
 
-int main(int argc, char* argv[]) {
-    std::string NAME_LABEL_AST = "AST";
-    std::string NAME_LABEL_PROGRAM = "PROGRAM";
-    std::string NAME_LABEL_CHILD = "CHILD";
+size_t get_unique_id() {
+    static std::atomic<size_t> at;
+    return at.fetch_add(1);
+}
 
+std::string get_unique_name(std::string_view sv) {
+    std::stringstream ss;
+    ss << sv << '_' << get_unique_id();
+    return ss.str();
+}
+
+int main(int argc, char* argv[]) {
     try {
         cxxopts::Options options("Lust-ASTVisualizer", "Visualize the AST nodes");
         options.add_options()
@@ -58,16 +66,16 @@ int main(int argc, char* argv[]) {
 
         {
             GVC_t* gv_context = gvContext();
-            Agraph_t* graph = agopen(NAME_LABEL_AST.data(), Agdirected, nullptr);
+            Agraph_t* graph = agopen(get_unique_name("AST").data(), Agdirected, nullptr);
             
-            Agnode_t* root_node = agnode(graph, NAME_LABEL_PROGRAM.data(), 1);
-            std::function<void(Agnode_t*, const lust::vector<const lust::grammar::IASTNode*>&)> add_nodes = [graph, &add_nodes, &NAME_LABEL_CHILD] (Agnode_t* parent_node, const lust::vector<const lust::grammar::IASTNode*>& nodes) {
+            Agnode_t* root_node = agnode(graph, get_unique_name("PROGRAM").data(), 1);
+            std::function<void(Agnode_t*, const lust::vector<const lust::grammar::IASTNode*>&)> add_nodes = [graph, &add_nodes] (Agnode_t* parent_node, const lust::vector<const lust::grammar::IASTNode*>& nodes) {
                 for (const lust::grammar::IASTNode* n : nodes) {
                     if (nullptr == n) {
                         continue;
                     }
-                    Agnode_t* new_node = agnode(graph, const_cast<char*>(lust::grammar::grammar_rule_to_name(n->get_type())), 1);
-                    agedge(graph, parent_node, new_node, NAME_LABEL_CHILD.data(), 1);
+                    Agnode_t* new_node = agnode(graph, get_unique_name(lust::grammar::grammar_rule_to_name(n->get_type())).data(), 1);
+                    agedge(graph, parent_node, new_node, get_unique_name("CHILD").data(), 1);
                     add_nodes(new_node, n->collect_self_nodes());
                 }
             };
