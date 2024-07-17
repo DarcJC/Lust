@@ -1,5 +1,6 @@
 #pragma once
 
+#include "container/simple_string.hpp"
 #include "container/unique_ptr.hpp"
 #include "container/vector.hpp"
 #include "lustfrontend_export.h"
@@ -112,6 +113,11 @@ namespace grammar
     };
 
     struct ASTNode_VarDecl : public ASTBaseNode<GrammarRule::VAR_DECL, ASTNode_Statement> {
+        UniquePtr<ASTNode_TypeExpr> specified_type;
+        bool is_forward_decl_only = false;
+        bool is_mutable = false;
+        bool is_const = false;
+        simple_string identifier;
 
         vector<const IASTNode*> collect_self_nodes() const override;
     };

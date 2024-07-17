@@ -250,15 +250,39 @@ namespace grammar
 
     UniquePtr<ASTNode_VarDecl> Parser::parse_variable_declaration()
     {
+        UniquePtr<ASTNode_VarDecl> res = make_unique<ASTNode_VarDecl>();
+
         bool is_let = false;
         bool is_const = false;
         if (optional(lexer::TerminalTokenType::LET)) is_let = true;
-        if (optional(lexer::TerminalTokenType::CONST)) is_const = true;
+        if (optional(lexer::TerminalTokenType::CONST)) {
+            res->is_const = true;
+            is_const = true;
+        }
 
         if ( is_let && is_const ) {
-            error("Token 'let' and 'const' is appearing at the same time");
+            error("Keyword 'let' and 'const' is appearing at the same time");
             return nullptr;
         }
+
+        if (optional(lexer::TerminalTokenType::MUT)) {
+            res->is_mutable = true;
+        }
+
+        res->identifier = m_current_token.value;
+        expected(lexer::TerminalTokenType::IDENT);
+
+        // type is optional if it can be infered from assign expression
+        if (optional(lexer::TerminalTokenType::COLON)) {
+            res->specified_type = parse_type_expr();
+        }
+
+        if (optional(lexer::TerminalTokenType::SEMICOLON)) {
+            res->is_forward_decl_only = true;
+            return res;
+        }
+
+        expected(lexer::TerminalTokenType::EQ);
 
         return nullptr;
     }

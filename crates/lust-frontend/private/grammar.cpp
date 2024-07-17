@@ -93,6 +93,7 @@ namespace grammar
         }
         res.push_back(params.get());
         res.push_back(ret_type.get());
+        res.push_back(body.get());
 
         return res;
     }
