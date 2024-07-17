@@ -5,12 +5,14 @@
 #include "lust/grammar.hpp"
 #include "lust/lexer.hpp"
 #include "lust/parser.hpp"
+#include <exception>
 #include <functional>
 #include <graphviz/cgraph.h>
 #include <graphviz/gvcext.h>
 #include <iostream>
 #include <cstdio>
 #include <sstream>
+#include <exception>
 
 std::string read_stdin() {
     std::stringstream ss;
@@ -22,6 +24,9 @@ std::string read_stdin() {
 }
 
 int main(int argc, char* argv[]) {
+    std::string NAME_LABEL_AST = "AST";
+    std::string NAME_LABEL_PROGRAM = "PROGRAM";
+    std::string NAME_LABEL_CHILD = "CHILD";
 
     try {
         cxxopts::Options options("Lust-ASTVisualizer", "Visualize the AST nodes");
@@ -52,19 +57,17 @@ int main(int argc, char* argv[]) {
         lust::UniquePtr<lust::grammar::ASTNode_Program> program = lust::grammar::IParser::create(tokens)->parse();
 
         {
-            std::string graph_name = "AST";
-            std::string root_name = "PROGRAM";
             GVC_t* gv_context = gvContext();
-            Agraph_t* graph = agopen(graph_name.data(), Agdirected, nullptr);
+            Agraph_t* graph = agopen(NAME_LABEL_AST.data(), Agdirected, nullptr);
             
-            Agnode_t* root_node = agnode(graph, root_name.data(), 1);
-            std::function<void(Agnode_t*, const lust::vector<const lust::grammar::IASTNode*>&)> add_nodes = [graph, &add_nodes] (Agnode_t* parent_node, const lust::vector<const lust::grammar::IASTNode*>& nodes) {
+            Agnode_t* root_node = agnode(graph, NAME_LABEL_PROGRAM.data(), 1);
+            std::function<void(Agnode_t*, const lust::vector<const lust::grammar::IASTNode*>&)> add_nodes = [graph, &add_nodes, &NAME_LABEL_CHILD] (Agnode_t* parent_node, const lust::vector<const lust::grammar::IASTNode*>& nodes) {
                 for (const lust::grammar::IASTNode* n : nodes) {
                     if (nullptr == n) {
                         continue;
                     }
                     Agnode_t* new_node = agnode(graph, const_cast<char*>(lust::grammar::grammar_rule_to_name(n->get_type())), 1);
-                    agedge(graph, parent_node, new_node, "child", 1);
+                    agedge(graph, parent_node, new_node, NAME_LABEL_CHILD.data(), 1);
                     add_nodes(new_node, n->collect_self_nodes());
                 }
             };
@@ -79,10 +82,12 @@ int main(int argc, char* argv[]) {
         }
     }
     catch (cxxopts::exceptions::parsing& err) {
-        std::cerr << "Invalid argument inputs" << std::endl;
+        std::cerr << "Invalid argument inputs: " << err.what() << std::endl;
         return 1;
     }
-    catch (cxxopts::exceptions::specification& err) {
+    catch (std::exception& err) {
+        std::cerr << "Unknown error: " << err.what() << std::endl;
+        return 2;
     }
 
     return 0;
