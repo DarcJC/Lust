@@ -8,6 +8,7 @@
 #include "container/unique_ptr.hpp"
 #include "grammar.hpp"
 #include "grammar/type_expr.hpp"
+#include "grammar/operator_expr.hpp"
 #include "lexer.hpp"
 
 namespace lust
@@ -94,6 +95,30 @@ namespace grammar
         UniquePtr<ASTNode_InvokeParam> parse_invoke_param();
 
         UniquePtr<ASTNode_Block> parse_code_block();
+
+        // === Expressions ===
+        UniquePtr<ASTNode_Operator> parse_expression();
+        UniquePtr<ASTNode_Operator> parse_expr_assignment();
+        UniquePtr<ASTNode_Operator> parse_expr_logical_or();
+        UniquePtr<ASTNode_Operator> parse_expr_logical_and();
+        UniquePtr<ASTNode_Operator> parse_expr_logical_equality();
+        UniquePtr<ASTNode_Operator> parse_expr_logical_none_equality();
+        UniquePtr<ASTNode_Operator> parse_expr_logical_less();
+        UniquePtr<ASTNode_Operator> parse_expr_logical_less_equalty();
+        UniquePtr<ASTNode_Operator> parse_expr_logical_greater();
+        UniquePtr<ASTNode_Operator> parse_expr_logical_greater_equalty();
+        UniquePtr<ASTNode_Operator> parse_expr_arithmetic_add();
+        UniquePtr<ASTNode_Operator> parse_expr_arithmetic_subtract();
+        UniquePtr<ASTNode_Operator> parse_expr_arithmetic_multiply();
+        UniquePtr<ASTNode_Operator> parse_expr_arithmetic_divide();
+        UniquePtr<ASTNode_Operator> parse_expr_bitwise_or();
+        UniquePtr<ASTNode_Operator> parse_expr_bitwise_xor();
+        UniquePtr<ASTNode_Operator> parse_expr_bitwise_and();
+        UniquePtr<ASTNode_Operator> parse_expr_arithmetic_mod();
+        UniquePtr<ASTNode_Operator> parse_expr_arithmetic_exponent();
+        UniquePtr<ASTNode_Operator> parse_expr_unary();
+        UniquePtr<ASTNode_Operator> parse_expr_primary();
+        UniquePtr<ASTNode_Operator> parse_expr_literal();
     };
 
     lust::UniquePtr<IParser> IParser::create(lexer::TokenStream &token_stream)
@@ -228,7 +253,14 @@ namespace grammar
             break;
         
         default:
-            error("Invalid statement");
+            auto expr = parse_expression();
+            if (!expr || expr->operator_type == OperatorType::INVALID) {
+                error("Invalid statement");
+            } else {
+                auto new_statement = make_unique<ASTNode_ExprStatement>();
+                new_statement->expression = std::move(expr);
+                statement = std::move(expr);
+            }
             break;
         }
 
@@ -283,6 +315,8 @@ namespace grammar
         }
 
         expected(lexer::TerminalTokenType::EQ);
+
+        res->evaluate_expression = parse_expression();
 
         return nullptr;
     }
@@ -624,6 +658,344 @@ namespace grammar
         }
 
         return res;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expression() {
+        return parse_expr_assignment();
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_assignment() {
+        UniquePtr<ASTNode_Operator> node = parse_expr_logical_or();
+
+        while (lexer::is_assignment_token(m_current_token.type)) {
+            UniquePtr<ASTNode_Operator> new_node = make_unique<ASTNode_Operator>();
+            switch (m_current_token.type) {
+                case lexer::TerminalTokenType::EQ:
+                    new_node->operator_type = OperatorType::ASSIGNMENT;
+                    break;
+                case lexer::TerminalTokenType::PLUS_EQUAL:
+                    new_node->operator_type = OperatorType::ASSIGNMENT_ADD;
+                    break;
+                case lexer::TerminalTokenType::MINUS_EQUAL:
+                    new_node->operator_type = OperatorType::ASSIGNMENT_SUBTRACT;
+                    break;
+                case lexer::TerminalTokenType::STAR_EQUAL:
+                    new_node->operator_type = OperatorType::ASSIGNMENT_MULTIPLY;
+                    break;
+                case lexer::TerminalTokenType::SLASH_EQUAL:
+                    new_node->operator_type = OperatorType::ASSIGNMENT_DIVIDE;
+                    break;
+                case lexer::TerminalTokenType::OR_EQUAL:
+                    new_node->operator_type = OperatorType::ASSIGNMENT_BITWISE_OR;
+                    break;
+                case lexer::TerminalTokenType::AND_EQUAL:
+                    new_node->operator_type = OperatorType::ASSIGNMENT_BITWISE_AND;
+                    break;
+                case lexer::TerminalTokenType::XOR_EQUAL:
+                    new_node->operator_type = OperatorType::ASSIGNMENT_BITWISE_XOR;
+                    break;
+                case lexer::TerminalTokenType::PRECENTAGE_EQUAL:
+                    new_node->operator_type = OperatorType::ASSIGNMENT_MOD;
+                    break;
+                default:
+                    new_node->operator_type = OperatorType::INVALID;
+                    break;
+            }
+            expected(m_current_token.type);
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_logical_or();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_logical_or() {
+        auto node = parse_expr_logical_and();
+
+        while (optional(lexer::TerminalTokenType::OR)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_logical_and();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_logical_and() {
+        auto node = parse_expr_logical_equality();
+
+        while (optional(lexer::TerminalTokenType::AND)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_logical_equality();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_logical_equality() {
+        auto node = parse_expr_logical_none_equality();
+
+        while (optional(lexer::TerminalTokenType::EQEQ)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_logical_none_equality();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_logical_none_equality() {
+        auto node = parse_expr_logical_less();
+
+        while (optional(lexer::TerminalTokenType::NEQ)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_logical_less();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_logical_less() {
+        auto node = parse_expr_logical_less_equalty();
+
+        while (optional(lexer::TerminalTokenType::LT)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_logical_none_equality();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_logical_less_equalty() {
+        auto node = parse_expr_logical_greater();
+
+        while (optional(lexer::TerminalTokenType::LT)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_logical_greater();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_logical_greater() {
+        auto node = parse_expr_logical_greater_equalty();
+
+        while (optional(lexer::TerminalTokenType::GT)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_logical_greater_equalty();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_logical_greater_equalty() {
+        auto node = parse_expr_arithmetic_add();
+
+        while (optional(lexer::TerminalTokenType::GTE)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_arithmetic_add();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_arithmetic_add() {
+        auto node = parse_expr_arithmetic_subtract();
+
+        while (optional(lexer::TerminalTokenType::PLUS)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_arithmetic_subtract();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_arithmetic_subtract() {
+        auto node = parse_expr_arithmetic_multiply();
+
+        while (optional(lexer::TerminalTokenType::MINUS)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_arithmetic_multiply();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_arithmetic_multiply() {
+        auto node = parse_expr_arithmetic_divide();
+
+        while (optional(lexer::TerminalTokenType::STAR)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_arithmetic_divide();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_arithmetic_divide() {
+        auto node = parse_expr_bitwise_or();
+
+        while (optional(lexer::TerminalTokenType::SLASH)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_bitwise_or();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_bitwise_or() {
+        auto node = parse_expr_bitwise_xor();
+
+        while (optional(lexer::TerminalTokenType::BITOR)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_bitwise_xor();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_bitwise_xor() {
+        auto node = parse_expr_bitwise_and();
+
+        while (optional(lexer::TerminalTokenType::BITXOR)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_bitwise_and();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_bitwise_and() {
+        auto node = parse_expr_arithmetic_mod();
+
+        while (optional(lexer::TerminalTokenType::BITAND)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_arithmetic_mod();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_arithmetic_mod() {
+        auto node = parse_expr_arithmetic_exponent();
+
+        while (optional(lexer::TerminalTokenType::PRECENTAGE)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_arithmetic_exponent();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_arithmetic_exponent() {
+        auto node = parse_expr_unary();
+
+        while (optional(lexer::TerminalTokenType::STARSTAR)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_unary();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_unary() {
+        if (lexer::is_unary_token(m_current_token.type)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            switch (m_current_token.type) {
+                case lexer::TerminalTokenType::MINUS:
+                    new_node->operator_type = OperatorType::UNARY_ARITHMETIC_SELF_CHANGE_SIGN;
+                    break;
+                case lexer::TerminalTokenType::PLUSPLUS:
+                    new_node->operator_type = OperatorType::UNARY_ARITHMETIC_SELF_INCREASE;
+                    break;
+                case lexer::TerminalTokenType::MINUSMINUS:
+                    new_node->operator_type = OperatorType::UNARY_ARITHMETIC_SELF_DECREASE;
+                    break;
+                case lexer::TerminalTokenType::NOT:
+                    new_node->operator_type = OperatorType::UNARY_LOGICAL_NOT;
+                    break;
+                case lexer::TerminalTokenType::BITINV:
+                    new_node->operator_type = OperatorType::UNARY_BITWISE_INVERSE;
+                    break;
+                default:
+                    new_node->operator_type = OperatorType::INVALID;
+            }
+            expected(m_current_token.type);
+            new_node->right_oprand = parse_expr_unary();
+            return new_node;
+        }
+
+        return parse_expr_primary();
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_primary() {
+        if (lexer::TerminalTokenType::INT == m_current_token.type) {
+            auto res = make_unique<ASTNode_IntegerExpr>();
+            res->operator_type = OperatorType::LITERAL_INTEGER;
+            expected(lexer::TerminalTokenType::INT);
+            return res;
+        } else if (lexer::TerminalTokenType::FLOAT == m_current_token.type) {
+            auto res = make_unique<ASTNode_FloatExpr>();
+            res->operator_type = OperatorType::LITERAL_FLOAT;
+            expected(lexer::TerminalTokenType::FLOAT);
+            return res;
+        } else if (lexer::TerminalTokenType::STRING == m_current_token.type) {
+            auto res = make_unique<ASTNode_StringExpr>();
+            res->operator_type = OperatorType::LITERAL_STRING;
+            expected(lexer::TerminalTokenType::STRING);
+            return res;
+        } else if (lexer::TerminalTokenType::IDENT == m_current_token.type) {
+            UniquePtr<ASTNode_QualifiedName> res = make_unique<ASTNode_QualifiedName>();
+            res->qualified_name = parse_qualifier_name();
+            if (optional(lexer::TerminalTokenType::LPAREN)) {
+                // function call, not (expr + expr) etc.
+                // TODO
+            }
+            return res;
+        } else if (optional(lexer::TerminalTokenType::LPAREN)) {
+            auto node = parse_expression();
+            expected(lexer::TerminalTokenType::RPAREN);
+            return node;
+        }
+
+        return nullptr;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_literal() {
+        return nullptr;
     }
 }
 }

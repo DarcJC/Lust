@@ -2,9 +2,9 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <string>
 #include <string_view>
 #include "container/simple_string.hpp"
+#include "lustfrontend_export.h"
 
 namespace lust {
 
@@ -172,12 +172,35 @@ namespace lexer {
         // false
         FALSE,
 
+        // +=
+        PLUS_EQUAL,
+        // -=
+        MINUS_EQUAL,
+        // *=
+        STAR_EQUAL,
+        // /=
+        SLASH_EQUAL,
+        // %=
+        PRECENTAGE_EQUAL,
+        // &=
+        AND_EQUAL,
+        // |=
+        OR_EQUAL,
+        // ^=
+        XOR_EQUAL,
+        // %
+        PRECENTAGE,
+
         // error
         ERROR,
         MAX_NUM,
     };
 
     LUSTFRONTEND_API extern const char* token_type_to_string(TerminalTokenType type);
+
+    LUSTFRONTEND_API extern const bool is_assignment_token(TerminalTokenType token_type);
+
+    LUSTFRONTEND_API extern const bool is_unary_token(TerminalTokenType token_type);
 
     struct SourceLoc {
         lust::simple_string filename = "<eval>";

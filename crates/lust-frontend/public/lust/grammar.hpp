@@ -4,6 +4,7 @@
 #include "container/unique_ptr.hpp"
 #include "container/vector.hpp"
 #include "lustfrontend_export.h"
+#include "grammar/qualified_name.hpp"
 
 namespace lust
 {
@@ -17,6 +18,7 @@ namespace grammar
     struct ASTNode_TypeExpr_Function;
     struct ASTNode_Block;
     struct ASTNode_Expr;
+    struct ASTNode_Operator;
 
     enum class GrammarRule : uint32_t {
         NONE,
@@ -38,6 +40,7 @@ namespace grammar
         INTEGER_LITERAL,
         FLOAT_LITERAL,
         STRING_LITERAL,
+        QUALIFIED_NAME_USAGE,
 
         MAX_NUM,
     };
@@ -67,11 +70,6 @@ namespace grammar
         constexpr GrammarRule get_type() const override {
             return Rule;
         }
-    };
-
-    struct QualifiedName { 
-        simple_string name;
-        vector<simple_string> name_spaces;
     };
 
     struct ASTNode_InvokeParam : public ASTBaseNode<GrammarRule::INVOKE_PARAM> {
@@ -123,6 +121,7 @@ namespace grammar
 
     struct ASTNode_VarDecl : public ASTBaseNode<GrammarRule::VAR_DECL, ASTNode_Statement> {
         UniquePtr<ASTNode_TypeExpr> specified_type;
+        UniquePtr<ASTNode_Operator> evaluate_expression;
         bool is_forward_decl_only = false;
         bool is_mutable = false;
         bool is_const = false;

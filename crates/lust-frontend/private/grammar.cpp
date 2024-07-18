@@ -23,6 +23,10 @@ namespace grammar
             case GrammarRule::INVOKE_PARAM_LIST: return "INVOKE_PARAM_LIST";
             case GrammarRule::BLOCK: return "BLOCK";
             case GrammarRule::OPERATOR: return "OPERATOR";
+            case GrammarRule::INTEGER_LITERAL: return "INTEGER_LITERAL";
+            case GrammarRule::FLOAT_LITERAL: return "FLOAT_LITERAL";
+            case GrammarRule::STRING_LITERAL: return "STRING_LITERAL";
+            case GrammarRule::QUALIFIED_NAME_USAGE: return "QUALIFIED_NAME_USAGE";
 
             default:
                 break;
@@ -88,7 +92,10 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_VarDecl::collect_self_nodes() const {
-        return ASTNode_Statement::collect_self_nodes();
+        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
+        res.push_back(specified_type.get());
+        res.push_back(evaluate_expression.get());
+        return res;
     }
 
     vector<const IASTNode*> ASTNode_FunctionDecl::collect_self_nodes() const {

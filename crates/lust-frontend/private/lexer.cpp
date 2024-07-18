@@ -143,14 +143,17 @@ namespace lexer
                 token = match_next('=') ? make_token(TerminalTokenType::GTE, ">=") : make_token(TerminalTokenType::GT, ">");
                 break;
             case '+':
-                token = match_next('+') ? make_token(TerminalTokenType::PLUSPLUS, "++") : make_token(TerminalTokenType::PLUS, "+");
+                token = match_next('+') ? make_token(TerminalTokenType::PLUSPLUS, "++") :
+                    match_next('=') ? make_token(TerminalTokenType::PLUS_EQUAL, "+=") : make_token(TerminalTokenType::PLUS, "+");
                 break;
             case '-':
                 token = match_next('-') ? make_token(TerminalTokenType::MINUSMINUS, "--") 
-                    : match_next('>') ? make_token(TerminalTokenType::ARROW, "->") : make_token(TerminalTokenType::MINUS, "-");
+                    : match_next('>') ? make_token(TerminalTokenType::ARROW, "->") 
+                    : match_next('=') ? make_token(TerminalTokenType::MINUS_EQUAL, "-=") : make_token(TerminalTokenType::MINUS, "-");
                 break;
             case '*':
-                token = match_next('*') ? make_token(TerminalTokenType::STARSTAR, "**") : make_token(TerminalTokenType::STAR, "*");
+                token = match_next('*') ? make_token(TerminalTokenType::STARSTAR, "**") :
+                    match_next('=') ? make_token(TerminalTokenType::STAR_EQUAL, "*=") : make_token(TerminalTokenType::STAR, "*");
                 break;
             case '/':
                 token = match_next('/') ? comment() : make_token(TerminalTokenType::SLASH, "/");
@@ -194,13 +197,15 @@ namespace lexer
                 token = make_token(TerminalTokenType::RBRACKET, "]");
                 break;
             case '|':
-                token = match_next('|') ? make_token(TerminalTokenType::OR, "||") : make_token(TerminalTokenType::BITOR, "|");
+                token = match_next('|') ? make_token(TerminalTokenType::OR, "||") :
+                    match_next('=') ? make_token(TerminalTokenType::OR_EQUAL, "|=") : make_token(TerminalTokenType::BITOR, "|");
                 break;
             case '&':
-                token = match_next('&') ? make_token(TerminalTokenType::AND, "&&") : make_token(TerminalTokenType::BITAND, "&");
+                token = match_next('&') ? make_token(TerminalTokenType::AND, "&&") :
+                    match_next('=') ? make_token(TerminalTokenType::AND_EQUAL, "&=") : make_token(TerminalTokenType::BITAND, "&");
                 break;
             case '^':
-                token = make_token(TerminalTokenType::BITXOR, "^");
+                token = match_next('=') ? make_token(TerminalTokenType::XOR_EQUAL, "^=") : make_token(TerminalTokenType::BITXOR, "^");
                 break;
             case '~':
                 token = make_token(TerminalTokenType::BITINV, "~");
@@ -208,6 +213,9 @@ namespace lexer
             case '#':
                 token = match_next('[') ? make_token(TerminalTokenType::ATTRIBUTE_START, "#[") :
                     match_next('!') ? make_token(TerminalTokenType::GLOBAL_ATTRIBUTE_START, "#!") : make_token(TerminalTokenType::HASH, "#");
+                break;
+            case '%':
+                token = match_next('=') ? make_token(TerminalTokenType::PRECENTAGE_EQUAL, "%=") : make_token(TerminalTokenType::PRECENTAGE, "%");
                 break;
             case '\r':
             case '\n':
@@ -528,10 +536,40 @@ token_exit:
             case TerminalTokenType::REF: return "REF";
             case TerminalTokenType::TRUE: return "TURE";
             case TerminalTokenType::FALSE: return "FALSE";
+            case TerminalTokenType::PLUS_EQUAL: return "PLUS_EQUAL";
+            case TerminalTokenType::MINUS_EQUAL: return "MINUS_EQUAL";
+            case TerminalTokenType::STAR_EQUAL: return "STAR_EQUAL";
+            case TerminalTokenType::SLASH_EQUAL: return "SLASH_EQUAL";
+            case TerminalTokenType::PRECENTAGE_EQUAL: return "PRECENTAGE_EQUAL";
+            case TerminalTokenType::AND_EQUAL: return "AND_EQUAL";
+            case TerminalTokenType::OR_EQUAL: return "OR_EQUAL";
+            case TerminalTokenType::XOR_EQUAL: return "XOR_EQUAL";
+            case TerminalTokenType::PRECENTAGE: return "PRECENTAGE";
             case TerminalTokenType::ERROR: return "ERROR";
             case TerminalTokenType::MAX_NUM: return "MAX_NUM";
             default: return "UNKNOWN";
         }
+    }
+
+    const bool is_assignment_token(const TerminalTokenType token_type) {
+        return token_type == TerminalTokenType::EQ
+            || token_type == TerminalTokenType::PLUS_EQUAL
+            || token_type == TerminalTokenType::MINUS_EQUAL
+            || token_type == TerminalTokenType::STAR_EQUAL
+            || token_type == TerminalTokenType::SLASH_EQUAL
+            || token_type == TerminalTokenType::PRECENTAGE_EQUAL
+            || token_type == TerminalTokenType::AND_EQUAL
+            || token_type == TerminalTokenType::OR_EQUAL
+            || token_type == TerminalTokenType::XOR_EQUAL;
+    }
+
+    const bool is_unary_token(const TerminalTokenType token_type) {
+        return token_type == TerminalTokenType::MINUS
+            || token_type == TerminalTokenType::NOT
+            || token_type == TerminalTokenType::PLUSPLUS
+            || token_type == TerminalTokenType::MINUSMINUS
+            || token_type == TerminalTokenType::BITINV
+        ;
     }
 
     TokenStream ITokenizer::create(std::string_view in_text)
