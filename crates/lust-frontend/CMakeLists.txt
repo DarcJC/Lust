@@ -7,6 +7,7 @@ set(LUST_FRONTEND_SOURCES
     private/parser.cpp
     
     private/grammar/type_expr.cpp
+    private/grammar/operator_expr.cpp
 )
 
 set(LUST_CONTAINER_SOURCES

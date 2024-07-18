@@ -2,7 +2,7 @@
 #include "container/unique_ptr.hpp"
 #include "container/vector.hpp"
 #include "grammar/type_expr.hpp"
-
+#include "grammar/operator_expr.hpp"
 
 namespace lust
 {
@@ -22,6 +22,7 @@ namespace grammar
             case GrammarRule::TYPE_EXPR: return "TYPE_EXPR";
             case GrammarRule::INVOKE_PARAM_LIST: return "INVOKE_PARAM_LIST";
             case GrammarRule::BLOCK: return "BLOCK";
+            case GrammarRule::OPERATOR: return "OPERATOR";
 
             default:
                 break;
@@ -33,6 +34,10 @@ namespace grammar
 
     vector<const IASTNode*> IASTNode::collect_self_nodes() const {
         return {};
+    }
+
+    simple_string IASTNode::get_name() const {
+        return grammar_rule_to_name(get_type());
     }
 
     vector<const IASTNode*> ASTNode_InvokeParam::collect_self_nodes() const {
@@ -50,15 +55,15 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_Attribute::collect_self_nodes() const {
-        return {};
+        return IASTNode::collect_self_nodes();
     }
     
     vector<const IASTNode*> ASTNode_GenericParam::collect_self_nodes() const {
-        return {};
+        return IASTNode::collect_self_nodes();
     }
 
     vector<const IASTNode*> ASTNode_Statement::collect_self_nodes() const {
-        vector<const IASTNode*> res;
+        vector<const IASTNode*> res = IASTNode::collect_self_nodes();
         for (const UniquePtr<ASTNode_Attribute>& attr : attributes) {
             res.push_back(attr.get());
         }
@@ -66,11 +71,13 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_ExprStatement::collect_self_nodes() const {
-        return ASTNode_Statement::collect_self_nodes();
+        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
+        res.push_back(expression.get());
+        return res;
     }
 
     vector<const IASTNode*> ASTNode_Program::collect_self_nodes() const {
-        vector<const IASTNode*> res;
+        vector<const IASTNode*> res = IASTNode::collect_self_nodes();
         for (const UniquePtr<ASTNode_Attribute>& attr : attributes) {
             res.push_back(attr.get());
         }
@@ -85,9 +92,8 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_FunctionDecl::collect_self_nodes() const {
-        vector<const IASTNode*> res;
+        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
 
-        res.extend(ASTNode_Statement::collect_self_nodes());
         for (auto& generic_param : generic_params) {
             res.push_back(generic_param.get());
         }
@@ -99,8 +105,7 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_Block::collect_self_nodes() const {
-        vector<const IASTNode*> res;
-        res.extend(ASTNode_Statement::collect_self_nodes());
+        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
         for (const UniquePtr<ASTNode_Statement>& statement : statements) {
             res.push_back(statement.get());
         }

@@ -16,6 +16,7 @@ namespace grammar
     struct ASTNode_TypeExpr_Generic;
     struct ASTNode_TypeExpr_Function;
     struct ASTNode_Block;
+    struct ASTNode_Expr;
 
     enum class GrammarRule : uint32_t {
         NONE,
@@ -32,6 +33,11 @@ namespace grammar
         TYPE_EXPR,
         INVOKE_PARAM_LIST,
         BLOCK,
+        OPERATOR,
+        EXPRESSION,
+        INTEGER_LITERAL,
+        FLOAT_LITERAL,
+        STRING_LITERAL,
 
         MAX_NUM,
     };
@@ -53,6 +59,7 @@ namespace grammar
         virtual GrammarRule get_type() const = 0;
 
         virtual vector<const IASTNode*> collect_self_nodes() const;
+        virtual simple_string get_name() const;
     };
 
     template <GrammarRule Rule, class Parent = IASTNode>
@@ -102,6 +109,8 @@ namespace grammar
     };
 
     struct ASTNode_ExprStatement : public ASTBaseNode<GrammarRule::EXPR_STATEMENT, ASTNode_Statement> {
+        UniquePtr<ASTNode_Expr> expression;
+
         vector<const IASTNode*> collect_self_nodes() const override;
     };
 

@@ -76,7 +76,7 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_TypeExpr_Tuple::collect_self_nodes() const {
-        vector<const IASTNode*> res;
+        vector<const IASTNode*> res = ASTNode_TypeExpr::collect_self_nodes();
         for (auto& t : composite_types) {
             res.push_back(t.get());
         }
@@ -84,13 +84,13 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_TypeExpr_Reference::collect_self_nodes() const {
-        vector<const IASTNode*> res;
+        vector<const IASTNode*> res = ASTNode_TypeExpr::collect_self_nodes();
         res.push_back(referenced_type.get());
         return res;
     }
 
     vector<const IASTNode*> ASTNode_TypeExpr_Generic::collect_self_nodes() const {
-        vector<const IASTNode*> res;
+        vector<const IASTNode*> res = ASTNode_TypeExpr::collect_self_nodes();
         for (auto& t : params) {
             res.push_back(t.get());
         }
@@ -98,7 +98,7 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_TypeExpr_Function::collect_self_nodes() const {
-        vector<const IASTNode*> res;
+        vector<const IASTNode*> res = ASTNode_TypeExpr::collect_self_nodes();
         for (auto& t : param_types) {
             res.push_back(t.get());
         }
@@ -107,7 +107,7 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_TypeExpr_Array::collect_self_nodes() const {
-        vector<const IASTNode*> res;
+        vector<const IASTNode*> res = ASTNode_TypeExpr::collect_self_nodes();
         res.push_back(array_type.get());
         return res;
     }

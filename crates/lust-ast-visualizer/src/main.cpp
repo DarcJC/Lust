@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
                     if (nullptr == n) {
                         continue;
                     }
-                    Agnode_t* new_node = agnode(graph, get_unique_name(lust::grammar::grammar_rule_to_name(n->get_type())).data(), 1);
+                    Agnode_t* new_node = agnode(graph, get_unique_name(n->get_name()).data(), 1);
                     agedge(graph, parent_node, new_node, get_unique_name("CHILD").data(), 1);
                     add_nodes(new_node, n->collect_self_nodes());
                 }
