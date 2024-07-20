@@ -720,6 +720,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::OR)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::LOGICAL_OR;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_logical_and();
             node = std::move(new_node);
@@ -733,6 +734,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::AND)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::LOGICAL_AND;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_logical_equality();
             node = std::move(new_node);
@@ -746,6 +748,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::EQEQ)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::LOGICAL_EQUALITY;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_logical_none_equality();
             node = std::move(new_node);
@@ -759,6 +762,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::NEQ)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::LOGICAL_NONE_EQUALITY;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_logical_less();
             node = std::move(new_node);
@@ -772,6 +776,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::LT)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::LOGICAL_RELATION_LESS_THAN;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_logical_none_equality();
             node = std::move(new_node);
@@ -783,8 +788,9 @@ namespace grammar
     UniquePtr<ASTNode_Operator> Parser::parse_expr_logical_less_equalty() {
         auto node = parse_expr_logical_greater();
 
-        while (optional(lexer::TerminalTokenType::LT)) {
+        while (optional(lexer::TerminalTokenType::LTE)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::LOGICAL_RELATION_LESS_THAN_EQUALITY;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_logical_greater();
             node = std::move(new_node);
@@ -798,6 +804,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::GT)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::LOGICAL_RELATION_GREATER_THAN;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_logical_greater_equalty();
             node = std::move(new_node);
@@ -811,6 +818,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::GTE)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::LOGICAL_RELATION_GREATER_THAN_EQUALITY;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_arithmetic_add();
             node = std::move(new_node);
@@ -824,6 +832,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::PLUS)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::ARITHMETIC_ADD;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_arithmetic_subtract();
             node = std::move(new_node);
@@ -837,6 +846,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::MINUS)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::ARITHMETIC_SUBTRACT;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_arithmetic_multiply();
             node = std::move(new_node);
@@ -850,6 +860,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::STAR)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::ARITHMETIC_MULTIPLY;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_arithmetic_divide();
             node = std::move(new_node);
@@ -863,6 +874,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::SLASH)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::ARITHMETIC_DIVIDE;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_bitwise_or();
             node = std::move(new_node);
@@ -876,6 +888,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::BITOR)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::BITWISE_OR;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_bitwise_xor();
             node = std::move(new_node);
@@ -889,6 +902,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::BITXOR)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::BITWISE_XOR;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_bitwise_and();
             node = std::move(new_node);
@@ -902,6 +916,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::BITAND)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::BITWISE_AND;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_arithmetic_mod();
             node = std::move(new_node);
@@ -915,6 +930,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::PRECENTAGE)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::ARITHMETIC_MOD;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_arithmetic_exponent();
             node = std::move(new_node);
@@ -928,6 +944,7 @@ namespace grammar
 
         while (optional(lexer::TerminalTokenType::STARSTAR)) {
             auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::ARITHMETIC_EXPONENT;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_unary();
             node = std::move(new_node);
