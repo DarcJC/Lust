@@ -309,6 +309,7 @@ token_exit:
             { "ref", TerminalTokenType::REF },
             { "true", TerminalTokenType::TRUE },
             { "false", TerminalTokenType::FALSE },
+            { "return", TerminalTokenType::RETURN },
         };
         if (auto it = keywords.find(std::string(text)); it != keywords.end()) {
             return it->second;
@@ -545,6 +546,7 @@ token_exit:
             case TerminalTokenType::OR_EQUAL: return "OR_EQUAL";
             case TerminalTokenType::XOR_EQUAL: return "XOR_EQUAL";
             case TerminalTokenType::PRECENTAGE: return "PRECENTAGE";
+            case TerminalTokenType::RETURN: return "RETURN";
             case TerminalTokenType::ERROR: return "ERROR";
             case TerminalTokenType::MAX_NUM: return "MAX_NUM";
             default: return "UNKNOWN";

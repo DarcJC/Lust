@@ -191,6 +191,9 @@ namespace lexer {
         // %
         PRECENTAGE,
 
+        // return
+        RETURN,
+
         // error
         ERROR,
         MAX_NUM,
