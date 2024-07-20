@@ -102,6 +102,7 @@ namespace grammar
     struct ASTNode_Statement : public ASTBaseNode<GrammarRule::STATEMENT> {
         vector<UniquePtr<ASTNode_Attribute>> attributes{};
         Visibility visibility;
+        bool is_end_with_semicolon = true;
 
         vector<const IASTNode*> collect_self_nodes() const override;
     };

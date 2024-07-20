@@ -259,6 +259,9 @@ namespace grammar
             } else {
                 auto new_statement = make_unique<ASTNode_ExprStatement>();
                 new_statement->expression = std::move(expr);
+                if (!optional(lexer::TerminalTokenType::SEMICOLON)) {
+                    new_statement->is_end_with_semicolon = false;
+                }
                 statement = std::move(expr);
             }
             break;
@@ -318,7 +321,9 @@ namespace grammar
 
         res->evaluate_expression = parse_expression();
 
-        return nullptr;
+        expected(lexer::TerminalTokenType::SEMICOLON, "Variable declaration must be ended with ';'");
+
+        return res;
     }
 
     UniquePtr<ASTNode_FunctionDecl> Parser::parse_function_declaration()
