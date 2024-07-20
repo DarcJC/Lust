@@ -33,7 +33,7 @@ namespace grammar
         void error_msg(std::string_view msg);
 
         /**
-         * @brief Notify a parser error, set parser error flag and comsume current token
+         * @brief Notify a parser error, set parser error flag and consume current token
          */
         void error(std::string_view msg);
 
@@ -48,12 +48,9 @@ namespace grammar
          * @brief The token consumer but no cause an error when failure
          */
         bool optional(lexer::TerminalTokenType expected_type);
-
-        vector<UniquePtr<ASTNode_Attribute>> consume_attributes();
     private:
         lexer::TokenStream& m_token_stream;
         lexer::Token m_current_token{};
-        vector<UniquePtr<ASTNode_Attribute>> m_pending_attributes;
 
         bool m_error_occurred = false;
 
@@ -95,6 +92,8 @@ namespace grammar
         UniquePtr<ASTNode_InvokeParam> parse_invoke_param();
 
         UniquePtr<ASTNode_Block> parse_code_block();
+
+        UniquePtr<ASTNode_Statement> parse_statement_with_attributes();
 
         // === Expressions ===
         UniquePtr<ASTNode_Operator> parse_expression();
@@ -196,15 +195,6 @@ namespace grammar
         return false;
     }
 
-    vector<UniquePtr<ASTNode_Attribute>> Parser::consume_attributes()
-    {
-        vector<UniquePtr<ASTNode_Attribute>> res = std::move(m_pending_attributes);
-
-        m_pending_attributes = vector<UniquePtr<ASTNode_Attribute>>();
-
-        return res;
-    }
-
     UniquePtr<ASTNode_Program> Parser::parse_program()
     {
         UniquePtr<ASTNode_Program> node = lust::make_unique<ASTNode_Program>();
@@ -220,7 +210,7 @@ namespace grammar
                 break;
 
             case lexer::TerminalTokenType::ATTRIBUTE_START:
-                m_pending_attributes.extend(parse_attribute_declaration());
+                node->statements.push_back(parse_statement_with_attributes());
                 break;
             
             default:
@@ -265,11 +255,6 @@ namespace grammar
                 statement = std::move(expr);
             }
             break;
-        }
-
-        if (statement) {
-            statement->attributes.extend(consume_attributes());
-            m_pending_attributes.clear();
         }
 
         return statement;
@@ -663,6 +648,16 @@ namespace grammar
         }
 
         return res;
+    }
+
+    UniquePtr<ASTNode_Statement> Parser::parse_statement_with_attributes() {
+        vector<UniquePtr<ASTNode_Attribute>> attributes;
+        while (lexer::TerminalTokenType::ATTRIBUTE_START == m_current_token.type) {
+            attributes.extend(parse_attribute_declaration());
+        }
+        auto statement = parse_statement();
+        statement->attributes = std::move(attributes);
+        return statement;
     }
 
     UniquePtr<ASTNode_Operator> Parser::parse_expression() {
