@@ -254,7 +254,7 @@ namespace grammar
                 if (!optional(lexer::TerminalTokenType::SEMICOLON)) {
                     new_statement->is_end_with_semicolon = false;
                 }
-                statement = std::move(expr);
+                statement = std::move(new_statement);
             }
             break;
         }
