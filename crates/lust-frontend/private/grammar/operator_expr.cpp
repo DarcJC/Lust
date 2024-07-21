@@ -57,5 +57,17 @@ namespace grammar
     simple_string ASTNode_Operator::get_name() const {
         return operator_type_to_name(operator_type);
     }
+
+    vector<const IASTNode*> ASTNode_QualifiedName::collect_self_nodes() const {
+        vector<const IASTNode*> res = ASTNode_Expr::collect_self_nodes();
+        res.push_back(left_oprand.get());
+        res.push_back(right_oprand.get());
+        res.push_back(passing_parameters.get());
+        return res;
+    }
+
+    simple_string ASTNode_QualifiedName::get_name() const {
+        return operator_type_to_name(operator_type);
+    }
 }
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "container/simple_string.hpp"
+#include "container/unique_ptr.hpp"
 #include "grammar.hpp"
 #include "lustfrontend_export.h"
 
@@ -81,6 +82,10 @@ namespace grammar
 
     struct ASTNode_QualifiedName : public ASTBaseNode<GrammarRule::QUALIFIED_NAME_USAGE, ASTNode_Operator> {
         QualifiedName qualified_name{};
+        UniquePtr<ASTNode_InvokeParameters> passing_parameters;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
+        simple_string get_name() const override;
     };
 
 }

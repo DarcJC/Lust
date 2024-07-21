@@ -89,7 +89,9 @@ namespace grammar
 
         UniquePtr<ASTNode_TypeExpr> create_unit_type();
 
-        UniquePtr<ASTNode_InvokeParam> parse_invoke_param();
+        UniquePtr<ASTNode_ParamDecl> parse_invokable_wanted_param();
+
+        UniquePtr<ASTNode_InvokeParameters> parse_invoke_param_list();
 
         UniquePtr<ASTNode_Block> parse_code_block();
 
@@ -325,7 +327,7 @@ namespace grammar
         
         do {
 
-            if (auto param = parse_invoke_param(); param) {
+            if (auto param = parse_invokable_wanted_param(); param) {
                 function->params->params.push_back(param);
             } else {
                 break;
@@ -620,9 +622,9 @@ namespace grammar
         return make_unique<ASTNode_TypeExpr>();
     }
 
-    UniquePtr<ASTNode_InvokeParam> Parser::parse_invoke_param()
+    UniquePtr<ASTNode_ParamDecl> Parser::parse_invokable_wanted_param()
     {
-        UniquePtr<ASTNode_InvokeParam> res = make_unique<ASTNode_InvokeParam>();
+        UniquePtr<ASTNode_ParamDecl> res = make_unique<ASTNode_ParamDecl>();
 
         if (expected(lexer::TerminalTokenType::IDENT)) {
             res->identifier = m_current_token.value;
@@ -636,6 +638,24 @@ namespace grammar
         }
 
         return nullptr;
+    }
+
+    UniquePtr<ASTNode_InvokeParameters> Parser::parse_invoke_param_list() {
+        auto new_node = make_unique<ASTNode_InvokeParameters>();
+
+        expected(lexer::TerminalTokenType::LPAREN);
+        
+        while (!optional(lexer::TerminalTokenType::RPAREN)) {
+            new_node->parameter_expressions.push_back(parse_expression());
+
+            // Every parameter expression should follow a comma
+            if (!optional(lexer::TerminalTokenType::COMMA)) {
+                expected(lexer::TerminalTokenType::RPAREN);
+                break;
+            }
+        }
+        
+        return new_node;
     }
 
     UniquePtr<ASTNode_Block> Parser::parse_code_block() {
@@ -998,9 +1018,10 @@ namespace grammar
             UniquePtr<ASTNode_QualifiedName> res = make_unique<ASTNode_QualifiedName>();
             res->operator_type = OperatorType::VARIABLE;
             res->qualified_name = parse_qualifier_name();
-            if (optional(lexer::TerminalTokenType::LPAREN)) {
+            if (lexer::TerminalTokenType::LPAREN == m_current_token.type) {
                 // function call, not (expr + expr) etc.
-                // TODO
+                res->operator_type = OperatorType::FUNCTION_CALL;
+                res->passing_parameters = parse_invoke_param_list();
             }
             return res;
         } else if (optional(lexer::TerminalTokenType::LPAREN)) {

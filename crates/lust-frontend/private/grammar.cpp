@@ -18,15 +18,16 @@ namespace grammar
             case GrammarRule::ATTRIBUTE: return "ATTRIBUTE";
             case GrammarRule::GENERIC_PARAM: return "GENERIC_PARAM";
             case GrammarRule::GENERIC: return "GENERIC";
-            case GrammarRule::INVOKE_PARAM: return "INVOKE_PARAM";
+            case GrammarRule::PARAMETER: return "INVOKE_PARAM";
             case GrammarRule::TYPE_EXPR: return "TYPE_EXPR";
-            case GrammarRule::INVOKE_PARAM_LIST: return "INVOKE_PARAM_LIST";
+            case GrammarRule::PARAMETERS_LIST: return "INVOKE_PARAM_LIST";
             case GrammarRule::BLOCK: return "BLOCK";
             case GrammarRule::OPERATOR: return "OPERATOR";
             case GrammarRule::INTEGER_LITERAL: return "INTEGER_LITERAL";
             case GrammarRule::FLOAT_LITERAL: return "FLOAT_LITERAL";
             case GrammarRule::STRING_LITERAL: return "STRING_LITERAL";
             case GrammarRule::QUALIFIED_NAME_USAGE: return "QUALIFIED_NAME_USAGE";
+            case GrammarRule::INVOKE_PARAMETERS: return "INVOKE_PARAMETERS";
 
             default:
                 break;
@@ -44,20 +45,27 @@ namespace grammar
         return grammar_rule_to_name(get_type());
     }
 
-    vector<const IASTNode*> ASTNode_InvokeParam::collect_self_nodes() const {
-            vector<const IASTNode*> res;
+    vector<const IASTNode*> ASTNode_ParamDecl::collect_self_nodes() const {
+            vector<const IASTNode*> res = IASTNode::collect_self_nodes();
             res.push_back(type.get());
             return res;
     }
 
     vector<const IASTNode*> ASTNode_ParamList::collect_self_nodes() const {
-        vector<const IASTNode*> res;
-        for (const UniquePtr<ASTNode_InvokeParam>& n : params) {
+            vector<const IASTNode*> res = IASTNode::collect_self_nodes();
+        for (const UniquePtr<ASTNode_ParamDecl>& n : params) {
             res.push_back(n.get());
         }
         return res;
     }
 
+    vector<const IASTNode*> ASTNode_InvokeParameters::collect_self_nodes() const {
+            vector<const IASTNode*> res = IASTNode::collect_self_nodes();
+        for (const auto& n : parameter_expressions) {
+            res.push_back(n.get());
+        }
+        return res;
+    }
     vector<const IASTNode*> ASTNode_Attribute::collect_self_nodes() const {
         return IASTNode::collect_self_nodes();
     }

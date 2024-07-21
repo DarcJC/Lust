@@ -31,9 +31,9 @@ namespace grammar
         ATTRIBUTE,
         GENERIC_PARAM,
         GENERIC,
-        INVOKE_PARAM,
+        PARAMETER,
         TYPE_EXPR,
-        INVOKE_PARAM_LIST,
+        PARAMETERS_LIST,
         BLOCK,
         OPERATOR,
         EXPRESSION,
@@ -41,6 +41,7 @@ namespace grammar
         FLOAT_LITERAL,
         STRING_LITERAL,
         QUALIFIED_NAME_USAGE,
+        INVOKE_PARAMETERS,
 
         MAX_NUM,
     };
@@ -72,15 +73,21 @@ namespace grammar
         }
     };
 
-    struct ASTNode_InvokeParam : public ASTBaseNode<GrammarRule::INVOKE_PARAM> {
+    struct ASTNode_ParamDecl : public ASTBaseNode<GrammarRule::PARAMETER> {
         UniquePtr<ASTNode_TypeExpr> type;
         simple_string identifier;
 
         vector<const IASTNode*> collect_self_nodes() const override;
     };
 
-    struct ASTNode_ParamList : public ASTBaseNode<GrammarRule::INVOKE_PARAM_LIST> {
-        vector<UniquePtr<ASTNode_InvokeParam>> params;
+    struct ASTNode_ParamList : public ASTBaseNode<GrammarRule::PARAMETERS_LIST> {
+        vector<UniquePtr<ASTNode_ParamDecl>> params;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
+    };
+
+    struct ASTNode_InvokeParameters : public ASTBaseNode<GrammarRule::INVOKE_PARAMETERS> {
+        vector<UniquePtr<ASTNode_Expr>> parameter_expressions;
 
         vector<const IASTNode*> collect_self_nodes() const override;
     };
