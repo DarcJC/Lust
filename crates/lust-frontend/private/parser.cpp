@@ -325,25 +325,18 @@ namespace grammar
 
         expected(lexer::TerminalTokenType::LPAREN);
         
-        do {
-
+        while (!optional(lexer::TerminalTokenType::RPAREN)) {
             if (auto param = parse_invokable_wanted_param(); param) {
                 function->params->params.push_back(param);
-            } else {
+            }
+
+            if (!optional(lexer::TerminalTokenType::COMMA)) {
+                expected(lexer::TerminalTokenType::RPAREN);
                 break;
             }
 
-            if (optional(lexer::TerminalTokenType::RPAREN)) {
-                break;
-            } else if (optional(lexer::TerminalTokenType::COMMA)) {
-                continue;
-            } else {
-                error("Function parameter list expected ',' and ')'");
-                break;
-            }
+        }
 
-        } while(true);
-        
         if (optional(lexer::TerminalTokenType::ARROW)) {
             function->ret_type = parse_type_expr();
         } else {
