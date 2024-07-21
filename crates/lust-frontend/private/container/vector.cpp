@@ -1,7 +1,7 @@
 #include "container/vector.hpp"
 #include <vector>
 #include <utility> // for std::move
-#include <stdexcept> // for std::out_of_range
+// #include <stdexcept> // for std::out_of_range
 #include <type_traits>
 
 #include "container/simple_string.hpp"
