@@ -996,6 +996,7 @@ namespace grammar
             return res;
         } else if (lexer::TerminalTokenType::IDENT == m_current_token.type) {
             UniquePtr<ASTNode_QualifiedName> res = make_unique<ASTNode_QualifiedName>();
+            res->operator_type = OperatorType::VARIABLE;
             res->qualified_name = parse_qualifier_name();
             if (optional(lexer::TerminalTokenType::LPAREN)) {
                 // function call, not (expr + expr) etc.

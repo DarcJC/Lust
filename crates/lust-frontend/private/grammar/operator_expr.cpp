@@ -33,6 +33,8 @@ namespace grammar
             case OperatorType::LITERAL_FLOAT: return "LITERAL_FLOAT";
             case OperatorType::LITERAL_STRING: return "LITERAL_STRING";
             case OperatorType::LITERAL_CHAR: return "LITERAL_CHAR";
+            case OperatorType::FUNCTION_CALL: return "FUNCTION_CALL";
+            case OperatorType::VARIABLE: return "VARIABLE";
 
             default:
                 break;

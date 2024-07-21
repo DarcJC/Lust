@@ -46,6 +46,8 @@ namespace grammar
         LITERAL_FLOAT,
         LITERAL_STRING,
         LITERAL_CHAR,
+        FUNCTION_CALL,
+        VARIABLE,
 
         MAX_NUM,
     };
