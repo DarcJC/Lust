@@ -673,7 +673,9 @@ namespace grammar
             attributes.extend(parse_attribute_declaration());
         }
         auto statement = parse_statement();
-        statement->attributes = std::move(attributes);
+        if (statement) {
+            statement->attributes = std::move(attributes);
+        }
         return statement;
     }
 
