@@ -51,6 +51,7 @@ namespace grammar
         VARIABLE,
         BLOCK,
         IF,
+        MEMBER_VISIT,
 
         MAX_NUM,
     };

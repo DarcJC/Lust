@@ -37,6 +37,7 @@ namespace grammar
             case OperatorType::VARIABLE: return "VARIABLE";
             case OperatorType::BLOCK: return "BLOCK";
             case OperatorType::IF: return "IF";
+            case OperatorType::MEMBER_VISIT: return "MEMBER_VISIT";
 
             default:
                 break;

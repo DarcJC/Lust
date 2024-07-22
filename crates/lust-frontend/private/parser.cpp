@@ -117,11 +117,13 @@ namespace grammar
         UniquePtr<ASTNode_Operator> parse_expr_bitwise_and();
         UniquePtr<ASTNode_Operator> parse_expr_arithmetic_mod();
         UniquePtr<ASTNode_Operator> parse_expr_arithmetic_exponent();
+        UniquePtr<ASTNode_Operator> parse_expr_member_visit();
         UniquePtr<ASTNode_Operator> parse_expr_unary();
         UniquePtr<ASTNode_Operator> parse_expr_primary();
 
         // === Composed Expressions ===
         UniquePtr<ASTNode_Operator> parse_expr_evaluate_block();
+        UniquePtr<ASTNode_Operator> parse_expr_conditional_evaluate_block();
     };
 
     lust::UniquePtr<IParser> IParser::create(lexer::TokenStream &token_stream)
@@ -950,11 +952,25 @@ namespace grammar
     }
 
     UniquePtr<ASTNode_Operator> Parser::parse_expr_arithmetic_exponent() {
-        auto node = parse_expr_unary();
+        auto node = parse_expr_member_visit();
 
         while (optional(lexer::TerminalTokenType::STARSTAR)) {
             auto new_node = make_unique<ASTNode_Operator>();
             new_node->operator_type = OperatorType::ARITHMETIC_EXPONENT;
+            new_node->left_oprand = std::move(node);
+            new_node->right_oprand = parse_expr_member_visit();
+            node = std::move(new_node);
+        }
+
+        return node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_member_visit() {
+        auto node = parse_expr_unary();
+
+        while (optional(lexer::TerminalTokenType::DOT)) {
+            auto new_node = make_unique<ASTNode_Operator>();
+            new_node->operator_type = OperatorType::MEMBER_VISIT;
             new_node->left_oprand = std::move(node);
             new_node->right_oprand = parse_expr_unary();
             node = std::move(new_node);
@@ -1026,6 +1042,9 @@ namespace grammar
         } else if (lexer::TerminalTokenType::LBRACE == m_current_token.type) {
             auto node = parse_expr_evaluate_block();
             return node;
+        } else if (lexer::TerminalTokenType::IF == m_current_token.type) {
+            auto node = parse_expr_conditional_evaluate_block();
+            return node;
         }
 
         return nullptr;
@@ -1038,6 +1057,11 @@ namespace grammar
         new_node->left_code_block = parse_code_block();
 
         return new_node;
+    }
+
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_conditional_evaluate_block() {
+        // TODO
+        return nullptr;
     }
 }
 }
