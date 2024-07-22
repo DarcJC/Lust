@@ -13,6 +13,10 @@ function(add_single_file_test_target name)
     target_link_libraries(${target_name} PRIVATE
         Lust::Frontend
     )
+    add_test(
+        NAME ${name}
+        COMMAND $<TARGET_FILE:${target_name}>
+    )
 endfunction(add_single_file_test_target)
 
 add_single_file_test_target(lexer-simple)

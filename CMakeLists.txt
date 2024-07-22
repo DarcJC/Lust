@@ -10,7 +10,8 @@ include(CMakeDependentOption)
 include(GenerateExportHeader)
 include(CheckIncludeFile)
 include_directories(
-        AFTER ${CMAKE_BINARY_DIR}/export_headers
+    AFTER
+        ${CMAKE_BINARY_DIR}/export_headers
 )
 
 # Building library and executable in same directory to avoid "dll not found" problem in Windows
@@ -29,5 +30,6 @@ add_subdirectory(crates)
 
 option(LUST_ENABLE_TESTS "" ON)
 if (LUST_ENABLE_TESTS OR CMAKE_PROJECT_IS_TOP_LEVEL)
-        add_subdirectory(tests)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
