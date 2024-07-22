@@ -1,6 +1,5 @@
 #pragma once
 
-#include <format>
 #include <iostream>
 #include <stdexcept>
 #include <string_view>
@@ -14,7 +13,7 @@ struct TestError : std::runtime_error {
 
 #define TEST_CHECK_OK_MSG(expr, ...) do {\
         if (!(expr)) { \
-            std::cerr << "Error message at " << __FILE__ << ":" << __LINE__ << "\n\t" << std::format(__VA_ARGS__) << std::endl; \
+            std::cerr << "Error message at " << __FILE__ << ":" << __LINE__ << "\n\t" << __VA_ARGS__ << std::endl; \
             throw TestError(); \
         } \
     } while (false);
@@ -22,7 +21,7 @@ struct TestError : std::runtime_error {
 
 #define TEST_MUST_BE_FALSE_MSG(expr, ...) do {\
         if ((expr)) { \
-            std::cerr << "Error message at " << __FILE__ << ":" << __LINE__ << "\n\t" << std::format(__VA_ARGS__) << std::endl; \
+            std::cerr << "Error message at " << __FILE__ << ":" << __LINE__ << "\n\t" << __VA_ARGS__ << std::endl; \
             throw TestError(); \
         } \
     } while (false);
