@@ -11,12 +11,9 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include "assert.hpp"
 
 void entry();
-
-struct TestError : std::runtime_error {
-    using std::runtime_error::runtime_error;
-};
 
 int main() {
     try {

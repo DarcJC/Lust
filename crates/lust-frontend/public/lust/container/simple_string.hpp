@@ -21,6 +21,12 @@ namespace lust
         simple_string& operator=(const simple_string& other) noexcept;
         simple_string& operator=(simple_string&& other) noexcept;
 
+        bool operator==(const simple_string& other) const noexcept;
+        bool operator!=(const simple_string& other) const noexcept;
+        
+        bool operator==(const char* other) const noexcept;
+        bool operator!=(const char* other) const noexcept;
+
         virtual ~simple_string();
 
         bool is_empty() const noexcept;

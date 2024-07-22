@@ -22,13 +22,13 @@ namespace lust
     }
 
     simple_string::simple_string(std::string_view s) : simple_string() {
-        if (s.empty()) {
+        if (!s.empty()) {
             set_data(s.data(), s.size());
         }
     }
 
     simple_string::simple_string(const simple_string &other) : simple_string() {
-        if (other.is_empty()) {
+        if (!other.is_empty()) {
             set_data(other.data(), other.m_length);
         }
     }
@@ -65,6 +65,32 @@ namespace lust
         return *this;
     }
 
+    bool simple_string::operator==(const simple_string& other) const noexcept {
+        if (m_length != other.m_length) {
+            return false;
+        }
+        return std::memcmp(data(), other.data(), m_length) == 0;
+    }
+
+    bool simple_string::operator!=(const simple_string& other) const noexcept {
+        return !(*this == other);
+    }
+
+    bool simple_string::operator==(const char* other) const noexcept {
+        if (nullptr == other) {
+             return false;
+        }
+        size_t len = std::strlen(other);
+        if (m_length != len) {
+            return false;
+        }
+        return std::memcmp(data(), other, m_length) == 0;
+    }
+
+    bool simple_string::operator!=(const char* other) const noexcept {
+        return !(*this == other);
+    }
+
     simple_string::~simple_string()
     {
         if (m_is_heap) {
@@ -98,10 +124,10 @@ namespace lust
                 std::memcpy(other.m_ss_buffer, temp, SSO_BUFFER_SIZE + 1);
                 swap(m_is_heap, other.m_is_heap);
             } else {
-                // Using par to copy SSO doesn't take advantages and even slower.
-                // But SIMD does.
-                std::swap_ranges(LUST_EXECUTION_CAN_VECTORIZATION, m_ss_buffer, m_ss_buffer + SSO_BUFFER_SIZE + 1, other.m_ss_buffer);
+                std::swap_ranges(m_ss_buffer, m_ss_buffer + SSO_BUFFER_SIZE + 1, other.m_ss_buffer);
             }
+            swap(m_capacity, other.m_capacity);
+            swap(m_length, other.m_length);
         }
     }
 
@@ -187,7 +213,7 @@ namespace lust
     }
 
     void simple_string::set_data(const char* s, size_t len) {
-        if (len < SSO_BUFFER_SIZE) {
+        if (len <= SSO_BUFFER_SIZE) {
             if (m_is_heap) {
                 delete[] m_heap_data;
                 m_is_heap = false;
