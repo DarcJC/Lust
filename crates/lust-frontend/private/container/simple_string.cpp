@@ -1,40 +1,59 @@
 #include "container/simple_string.hpp"
+#include "lust/defines.hpp"
 
 #include <cstring>
-#include <type_traits>
+#include <execution>
+#include <string_view>
+#include <algorithm>
 
 namespace lust
 {
-    simple_string::simple_string() = default;
-
-    simple_string::simple_string(const char* s) {
-        append(s);
+    simple_string::simple_string()
+        : m_length(0)
+        , m_is_heap(false)
+    {
+        m_ss_buffer[0] = '\0';
     }
 
-    simple_string::simple_string(std::string_view s)
-    {
-        append(s);
+    simple_string::simple_string(const char* s) : simple_string() {
+        if (s) {
+            set_data(s, std::strlen(s));
+        }
     }
 
-    simple_string::simple_string(const simple_string &other)
-    {
-        if (!other.is_empty()) {
-            append(other.m_data);
+    simple_string::simple_string(std::string_view s) : simple_string() {
+        if (s.empty()) {
+            set_data(s.data(), s.size());
+        }
+    }
+
+    simple_string::simple_string(const simple_string &other) : simple_string() {
+        if (other.is_empty()) {
+            set_data(other.data(), other.m_length);
         }
     }
 
     simple_string::simple_string(simple_string &&other)
+        : m_length(other.m_length)
+        , m_capacity(other.m_capacity)
+        , m_is_heap(other.m_is_heap)
     {
-        m_data = other.m_data;
-        m_length = other.m_length;
-
-        other.m_data = nullptr;
+        if (m_is_heap) {
+            m_heap_data = other.m_heap_data;
+            other.m_heap_data = nullptr;
+        } else {
+            std::memcpy(m_ss_buffer, other.m_ss_buffer, m_length + 1);
+        }
         other.m_length = 0;
+        other.m_capacity = SSO_BUFFER_SIZE;
+        other.m_is_heap = false;
     }
 
     simple_string &simple_string::operator=(const simple_string &other) noexcept
     {
-        simple_string(other).swap(*this);
+        if (this != &other) {
+            simple_string(other).swap(*this);
+        }
         return *this;
     }
 
@@ -48,7 +67,9 @@ namespace lust
 
     simple_string::~simple_string()
     {
-        delete[] m_data;
+        if (m_is_heap) {
+            delete[] m_heap_data;
+        }
     }
 
     bool simple_string::is_empty() const noexcept
@@ -58,36 +79,54 @@ namespace lust
 
     void simple_string::swap(simple_string &other)
     {
+        using std::swap;
         if (&other != this) {
-            auto* other_data = other.m_data;
-            auto other_len = other.m_length;
-
-            other.m_data = m_data;
-            other.m_length = m_length;
-
-            m_data = other_data;
-            m_length = other_len;
+            if (m_is_heap && other.m_is_heap) {
+                swap(m_heap_data, other.m_heap_data);
+            } else if (m_is_heap) {
+                char temp[SSO_BUFFER_SIZE + 1];
+                std::memcpy(temp, other.m_ss_buffer, SSO_BUFFER_SIZE + 1);
+                other.m_heap_data = m_heap_data;
+                m_heap_data = nullptr;
+                std::memcpy(m_ss_buffer, temp, SSO_BUFFER_SIZE + 1);
+                swap(m_is_heap, other.m_is_heap);
+            } else if (other.m_is_heap) {
+                char temp[SSO_BUFFER_SIZE + 1];
+                std::memcpy(temp, m_ss_buffer, SSO_BUFFER_SIZE + 1);
+                m_heap_data = other.m_heap_data;
+                other.m_heap_data = nullptr;
+                std::memcpy(other.m_ss_buffer, temp, SSO_BUFFER_SIZE + 1);
+                swap(m_is_heap, other.m_is_heap);
+            } else {
+                // Using par to copy SSO doesn't take advantages and even slower.
+                // But SIMD does.
+                std::swap_ranges(LUST_EXECUTION_CAN_VECTORIZATION, m_ss_buffer, m_ss_buffer + SSO_BUFFER_SIZE + 1, other.m_ss_buffer);
+            }
         }
     }
 
     simple_string::operator std::string_view() noexcept
     {
-        return std::string_view(m_data, m_length);
+        return m_is_heap ? std::string_view(m_heap_data, m_length) : std::string_view(m_ss_buffer, m_length);
     }
 
     simple_string::operator const char*() const noexcept
     {
-        return m_data;
+        return data();
     }
 
     simple_string::operator char *() noexcept
     {
-        return m_data;
+        return data();
     }
 
     char *simple_string::data()
     {
-        return m_data;
+        return m_is_heap ? m_heap_data : m_ss_buffer;
+    }
+
+    const char* simple_string::data() const {
+        return m_is_heap ? m_heap_data : m_ss_buffer;
     }
 
     size_t simple_string::length() {
@@ -95,13 +134,22 @@ namespace lust
     }
 
     void simple_string::ensure_capacity(size_t new_length) {
-        if (new_length > m_length) {
-            char* new_data = new char[new_length + 1];
-            if (m_data) {
-                std::memcpy(new_data, m_data, m_length);
-                delete[] m_data;
-            }
-            m_data = new_data;
+        if (new_length <= SSO_BUFFER_SIZE) {
+            return;
+        }
+
+        if (!m_is_heap) {
+            m_is_heap = true;
+            m_capacity = new_length;
+            char* new_data = new char[m_capacity + 1];
+            std::memcpy(new_data, m_ss_buffer, m_length + 1);
+            m_heap_data = new_data;
+        } else if (new_length > m_capacity) {
+            m_capacity = new_length;
+            char* new_data = new char[m_capacity + 1];
+            std::memcpy(new_data, m_heap_data, m_length + 1);
+            delete[] m_heap_data;
+            m_heap_data = new_data;
         }
     }
 
@@ -109,7 +157,7 @@ namespace lust
         if (s) {
             size_t new_length = m_length + std::strlen(s);
             ensure_capacity(new_length);
-            std::memcpy(m_data + m_length, s, std::strlen(s) + 1);
+            std::memcpy(data() + m_length, s, std::strlen(s) + 1);
             m_length = new_length;
         }
         return *this;
@@ -119,9 +167,9 @@ namespace lust
         if (!s.empty()) {
             size_t new_length = m_length + s.size();
             ensure_capacity(new_length);
-            std::memcpy(m_data + m_length, s.data(), s.size());
+            std::memcpy(data() + m_length, s.data(), s.size());
             m_length = new_length;
-            m_data[m_length] = '\0';
+            data()[m_length] = '\0';
         }
         return *this;
     }
@@ -135,6 +183,24 @@ namespace lust
     }
 
     simple_string& simple_string::operator+=(const simple_string& other) {
-        return append(other.m_data);
+        return append(const_cast<simple_string&>(other).operator std::string_view());
+    }
+
+    void simple_string::set_data(const char* s, size_t len) {
+        if (len < SSO_BUFFER_SIZE) {
+            if (m_is_heap) {
+                delete[] m_heap_data;
+                m_is_heap = false;
+            }
+            std::memcpy(m_ss_buffer, s, len);
+            m_ss_buffer[len] = '\0';
+            m_length = len;
+            m_capacity = SSO_BUFFER_SIZE;
+        } else {
+            ensure_capacity(len);
+            std::memcpy(data(), s, len);
+            data()[len] = '\0';
+            m_length = len;
+        }
     }
 }

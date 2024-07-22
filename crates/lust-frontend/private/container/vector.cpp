@@ -8,6 +8,7 @@
 #include "container/unique_ptr.hpp"
 #include "grammar.hpp"
 #include "grammar/type_expr.hpp"
+#include "grammar/operator_expr.hpp"
 
 namespace lust {
     template <typename T>

@@ -5,6 +5,10 @@
 
 namespace lust
 {
+    // Small String Optimization on stack(also can be data segment and so on) memory size
+    // Notice it memory usage will be SSO_BUFFER_SIZE + 1 because we need space to store '\0'
+    constexpr size_t SSO_BUFFER_SIZE = 15;
+
     class LUSTFRONTEND_API simple_string {
     public:
         simple_string();
@@ -27,6 +31,7 @@ namespace lust
         operator char*() noexcept;
 
         char* data();
+        const char* data() const;
         size_t length();
         void ensure_capacity(size_t new_length);
 
@@ -38,8 +43,15 @@ namespace lust
         simple_string& operator+=(const simple_string& other);
 
     private:
-        char* m_data = nullptr;
+        union {
+            char m_ss_buffer[SSO_BUFFER_SIZE + 1]; // internal buffer
+            char* m_heap_data; // allocated by memory allocator
+        };
         size_t m_length = 0;
+        size_t m_capacity = SSO_BUFFER_SIZE;
+        bool m_is_heap = false;
+
+        void set_data(const char* s, size_t len);
 
     };
 
