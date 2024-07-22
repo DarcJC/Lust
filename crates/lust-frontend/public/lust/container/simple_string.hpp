@@ -20,7 +20,6 @@ namespace lust
         virtual ~simple_string();
 
         bool is_empty() const noexcept;
-
         void swap(simple_string& other);
 
         operator std::string_view() noexcept;
@@ -28,6 +27,15 @@ namespace lust
         operator char*() noexcept;
 
         char* data();
+        size_t length();
+        void ensure_capacity(size_t new_length);
+
+        simple_string& append(const char* s);
+        simple_string& append(std::string_view s);
+
+        simple_string& operator+=(const char* s);
+        simple_string& operator+=(std::string_view s);
+        simple_string& operator+=(const simple_string& other);
 
     private:
         char* m_data = nullptr;

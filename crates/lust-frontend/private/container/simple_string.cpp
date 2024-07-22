@@ -2,36 +2,24 @@
 
 #include <cstring>
 #include <type_traits>
-#include <memory>
 
 namespace lust
 {
     simple_string::simple_string() = default;
 
     simple_string::simple_string(const char* s) {
-        if (nullptr != s) {
-            m_length = strlen(s);
-            m_data = new char[m_length + 1];
-            strcpy(m_data, s);
-        }
+        append(s);
     }
 
     simple_string::simple_string(std::string_view s)
     {
-        if (!s.empty()) {
-            m_length = s.size();
-            m_data = new char[m_length + 1];
-            strncpy(m_data, s.data(), m_length);
-            m_data[m_length] = '\0';
-        }
+        append(s);
     }
 
     simple_string::simple_string(const simple_string &other)
     {
         if (!other.is_empty()) {
-            m_length = other.m_length;
-            m_data = new char[m_length + 1];
-            strcpy(m_data, other.m_data);
+            append(other.m_data);
         }
     }
 
@@ -52,13 +40,15 @@ namespace lust
 
     simple_string &simple_string::operator=(simple_string &&other) noexcept
     {
-        simple_string(std::forward<simple_string>(other)).swap(*this);
+        if (this != &other) {
+            simple_string(std::forward<simple_string>(other)).swap(*this);
+        }
         return *this;
     }
 
     simple_string::~simple_string()
     {
-        delete m_data;
+        delete[] m_data;
     }
 
     bool simple_string::is_empty() const noexcept
@@ -98,5 +88,53 @@ namespace lust
     char *simple_string::data()
     {
         return m_data;
+    }
+
+    size_t simple_string::length() {
+        return m_length;
+    }
+
+    void simple_string::ensure_capacity(size_t new_length) {
+        if (new_length > m_length) {
+            char* new_data = new char[new_length + 1];
+            if (m_data) {
+                std::memcpy(new_data, m_data, m_length);
+                delete[] m_data;
+            }
+            m_data = new_data;
+        }
+    }
+
+    simple_string& simple_string::append(const char* s) {
+        if (s) {
+            size_t new_length = m_length + std::strlen(s);
+            ensure_capacity(new_length);
+            std::memcpy(m_data + m_length, s, std::strlen(s) + 1);
+            m_length = new_length;
+        }
+        return *this;
+    }
+
+    simple_string& simple_string::append(std::string_view s) {
+        if (!s.empty()) {
+            size_t new_length = m_length + s.size();
+            ensure_capacity(new_length);
+            std::memcpy(m_data + m_length, s.data(), s.size());
+            m_length = new_length;
+            m_data[m_length] = '\0';
+        }
+        return *this;
+    }
+
+    simple_string& simple_string::operator+=(const char* s) {
+        return append(s);
+    }
+
+    simple_string& simple_string::operator+=(std::string_view s) {
+        return append(s);
+    }
+
+    simple_string& simple_string::operator+=(const simple_string& other) {
+        return append(other.m_data);
     }
 }
