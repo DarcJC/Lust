@@ -35,6 +35,8 @@ namespace grammar
             case OperatorType::LITERAL_CHAR: return "LITERAL_CHAR";
             case OperatorType::FUNCTION_CALL: return "FUNCTION_CALL";
             case OperatorType::VARIABLE: return "VARIABLE";
+            case OperatorType::BLOCK: return "BLOCK";
+            case OperatorType::IF: return "IF";
 
             default:
                 break;
@@ -68,6 +70,19 @@ namespace grammar
 
     simple_string ASTNode_QualifiedName::get_name() const {
         return operator_type_to_name(operator_type);
+    }
+
+    vector<const IASTNode*> ASTNode_BlockExpr::collect_self_nodes() const {
+        auto res = ASTNode_Operator::collect_self_nodes();
+        res.push_back(left_code_block.get());
+        res.push_back(right_code_block.get());
+        return res;
+    }
+
+    vector<const IASTNode*> ASTNode_ConditionalBlockExpr::collect_self_nodes() const {
+        auto res = ASTNode_BlockExpr::collect_self_nodes();
+        res.push_back(condition.get());
+        return res;
     }
 }
 }

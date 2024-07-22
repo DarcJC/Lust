@@ -49,6 +49,8 @@ namespace grammar
         LITERAL_CHAR,
         FUNCTION_CALL,
         VARIABLE,
+        BLOCK,
+        IF,
 
         MAX_NUM,
     };
@@ -86,6 +88,19 @@ namespace grammar
 
         vector<const IASTNode*> collect_self_nodes() const override;
         simple_string get_name() const override;
+    };
+
+    struct ASTNode_BlockExpr : public ASTBaseNode<GrammarRule::BLOCK_EXPR, ASTNode_Operator> {
+        UniquePtr<ASTNode_Block> left_code_block;
+        UniquePtr<ASTNode_Block> right_code_block;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
+    };
+
+    struct ASTNode_ConditionalBlockExpr : public ASTBaseNode<GrammarRule::IF_BLOCK_EXPR, ASTNode_BlockExpr> {
+        UniquePtr<ASTNode_Expr> condition;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
 }

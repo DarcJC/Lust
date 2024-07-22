@@ -42,6 +42,8 @@ namespace grammar
         STRING_LITERAL,
         QUALIFIED_NAME_USAGE,
         INVOKE_PARAMETERS,
+        BLOCK_EXPR,
+        IF_BLOCK_EXPR,
 
         MAX_NUM,
     };

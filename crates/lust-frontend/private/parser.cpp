@@ -97,7 +97,7 @@ namespace grammar
 
         UniquePtr<ASTNode_Statement> parse_statement_with_attributes();
 
-        // === Expressions ===
+        // === Basic Expressions ===
         UniquePtr<ASTNode_Operator> parse_expression();
         UniquePtr<ASTNode_Operator> parse_expr_assignment();
         UniquePtr<ASTNode_Operator> parse_expr_logical_or();
@@ -119,7 +119,9 @@ namespace grammar
         UniquePtr<ASTNode_Operator> parse_expr_arithmetic_exponent();
         UniquePtr<ASTNode_Operator> parse_expr_unary();
         UniquePtr<ASTNode_Operator> parse_expr_primary();
-        UniquePtr<ASTNode_Operator> parse_expr_literal();
+
+        // === Composed Expressions ===
+        UniquePtr<ASTNode_Operator> parse_expr_evaluate_block();
     };
 
     lust::UniquePtr<IParser> IParser::create(lexer::TokenStream &token_stream)
@@ -1021,13 +1023,21 @@ namespace grammar
             auto node = parse_expression();
             expected(lexer::TerminalTokenType::RPAREN);
             return node;
+        } else if (lexer::TerminalTokenType::LBRACE == m_current_token.type) {
+            auto node = parse_expr_evaluate_block();
+            return node;
         }
 
         return nullptr;
     }
 
-    UniquePtr<ASTNode_Operator> Parser::parse_expr_literal() {
-        return nullptr;
+    UniquePtr<ASTNode_Operator> Parser::parse_expr_evaluate_block() {
+        auto new_node = make_unique<ASTNode_BlockExpr>();
+
+        new_node->operator_type = OperatorType::BLOCK;
+        new_node->left_code_block = parse_code_block();
+
+        return new_node;
     }
 }
 }

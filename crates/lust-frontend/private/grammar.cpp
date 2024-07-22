@@ -29,6 +29,8 @@ namespace grammar
             case GrammarRule::STRING_LITERAL: return "STRING_LITERAL";
             case GrammarRule::QUALIFIED_NAME_USAGE: return "QUALIFIED_NAME_USAGE";
             case GrammarRule::INVOKE_PARAMETERS: return "INVOKE_PARAMETERS";
+            case GrammarRule::BLOCK_EXPR: return "BLOCK_EXPR";
+            case GrammarRule::IF_BLOCK_EXPR: return "IF_BLOCK_EXPR";
 
             default:
                 break;
