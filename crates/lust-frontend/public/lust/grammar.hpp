@@ -112,6 +112,7 @@ namespace grammar
         bool is_end_with_semicolon = true;
 
         vector<const IASTNode*> collect_self_nodes() const override;
+        simple_string get_name() const override;
     };
 
     struct ASTNode_ExprStatement : public ASTBaseNode<GrammarRule::EXPR_STATEMENT, ASTNode_Statement> {

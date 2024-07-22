@@ -1,4 +1,5 @@
 #include "grammar.hpp"
+#include "container/simple_string.hpp"
 #include "container/unique_ptr.hpp"
 #include "container/vector.hpp"
 #include "grammar/type_expr.hpp"
@@ -80,6 +81,14 @@ namespace grammar
             res.push_back(attr.get());
         }
         return res;
+    }
+
+    simple_string ASTNode_Statement::get_name() const {
+        simple_string name = IASTNode::get_name();
+        if (!is_end_with_semicolon) {
+            name += "(RET)";
+        }
+        return name;
     }
 
     vector<const IASTNode*> ASTNode_ExprStatement::collect_self_nodes() const {
