@@ -163,7 +163,7 @@ namespace lust
         return *this;
     }
 
-    simple_string& simple_string::append(std::string_view s) {
+    simple_string& simple_string::append(const std::string_view s) {
         if (!s.empty()) {
             size_t new_length = m_length + s.size();
             ensure_capacity(new_length);
