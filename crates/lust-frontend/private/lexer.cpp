@@ -221,6 +221,9 @@ namespace lexer
             case '\n':
                 token = newline();
                 break;
+            case '\0':
+                token = make_token(TerminalTokenType::END, "EOF");
+                break;
             default:
                 token = error_token("Unexpected character");
         }

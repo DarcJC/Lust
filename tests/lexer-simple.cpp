@@ -1,3 +1,4 @@
+#include "assert.hpp"
 #include "single_file_test.hpp"
 #include "lust/lexer.hpp"
 
@@ -32,7 +33,7 @@ void entry() {
     while (lexer->is_cursor_valid()) {
         lust::lexer::Token token = lexer->next_token();
         if (token.type == lust::lexer::TerminalTokenType::ERROR) {
-            break;
+            throw TestError(token.get_value());
         }
         std::cout << lust::lexer::token_type_to_string(token.type) << ": " << token.get_value() << std::endl;
     }
