@@ -137,5 +137,13 @@ namespace grammar
         }
         return res;
     }
+
+    vector<const IASTNode*> ASTNode_StructDecl::collect_self_nodes() const {
+        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
+        for (const UniquePtr<ASTNode_StructField>& field : fields) {
+            res.push_back(field.get());
+        }
+        return res;
+    }
 }
 }

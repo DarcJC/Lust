@@ -11,7 +11,7 @@ const TEST = 123.5;
 
 #[derive(Debug)]
 struct Foo<T> {
-    val: T
+    val: T,
 }
 
 impl Display for Foo<u8> {

@@ -44,6 +44,8 @@ namespace grammar
         INVOKE_PARAMETERS,
         BLOCK_EXPR,
         IF_BLOCK_EXPR,
+        STRUCT,
+        STRUCT_FIELD,
 
         MAX_NUM,
     };
@@ -71,6 +73,10 @@ namespace grammar
     template <GrammarRule Rule, class Parent = IASTNode>
     struct ASTBaseNode : public Parent { 
         constexpr GrammarRule get_type() const override {
+            return Rule;
+        }
+
+        constexpr static GrammarRule static_type() {
             return Rule;
         }
     };
@@ -157,5 +163,29 @@ namespace grammar
 
         vector<const IASTNode*> collect_self_nodes() const override;
     };
+
+    struct ASTNode_StructField : public ASTBaseNode<GrammarRule::STRUCT_FIELD, ASTNode_Statement> {
+        bool is_field_mutable = false;
+        simple_string field_identifier;
+        QualifiedName field_type;
+    };
+
+    struct ASTNode_StructDecl : public ASTBaseNode<GrammarRule::STRUCT, ASTNode_Statement> {
+        simple_string identifier;
+        vector<UniquePtr<ASTNode_StructField>> fields{};
+        vector<UniquePtr<ASTNode_GenericParam>> generic_params;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
+    };
+
+    template <typename T>
+    T* dyn_cast(IASTNode* node) {
+        if (node) {
+            if (node->get_type() == T::static_type()) {
+                return static_cast<T*>(node);
+            }
+        }
+        return nullptr;
+    }
 }
 }

@@ -97,6 +97,10 @@ namespace grammar
 
         UniquePtr<ASTNode_Statement> parse_statement_with_attributes();
 
+        UniquePtr<ASTNode_StructDecl> parse_struct_declaration();
+
+        UniquePtr<ASTNode_StructField> parse_struct_field_declaration();
+
         // === Basic Expressions ===
         UniquePtr<ASTNode_Operator> parse_expression();
         UniquePtr<ASTNode_Operator> parse_expr_assignment();
@@ -246,6 +250,9 @@ namespace grammar
             break;
         case lexer::TerminalTokenType::LBRACE:
             statement = parse_code_block();
+            break;
+        case lexer::TerminalTokenType::STRUCT:
+            statement = parse_struct_declaration();
             break;
         
         default:
@@ -1063,7 +1070,50 @@ namespace grammar
 
     UniquePtr<ASTNode_Operator> Parser::parse_expr_conditional_evaluate_block() {
         // TODO
+        error("if-expr doesn't implemented yet");
         return nullptr;
+    }
+
+    UniquePtr<ASTNode_StructDecl> Parser::parse_struct_declaration() {
+        auto new_node = make_unique<ASTNode_StructDecl>();
+
+        expected(lexer::TerminalTokenType::STRUCT);
+
+        if (m_current_token.type == lexer::TerminalTokenType::IDENT) {
+            new_node->identifier = m_current_token.value;
+        }
+        expected(lexer::TerminalTokenType::IDENT);
+
+        new_node->generic_params = try_parse_generic_params();
+
+        expected(lexer::TerminalTokenType::LBRACE);
+
+        while (!optional(lexer::TerminalTokenType::RBRACE)) {
+            new_node->fields.push_back(parse_struct_field_declaration());
+        }
+
+        while (optional(lexer::TerminalTokenType::SEMICOLON)) ;
+
+        return new_node;
+    }
+
+    UniquePtr<ASTNode_StructField> Parser::parse_struct_field_declaration() {
+        auto new_node = make_unique<ASTNode_StructField>();
+
+        if (lexer::TerminalTokenType::IDENT == m_current_token.type) {
+            new_node->field_identifier = m_current_token.value;
+        }
+        expected(lexer::TerminalTokenType::IDENT);
+
+        expected(lexer::TerminalTokenType::COLON);
+
+        new_node->field_type = parse_qualifier_name();
+
+        if (!optional(lexer::TerminalTokenType::COMMA)) {
+            optional(lexer::TerminalTokenType::SEMICOLON);
+        }
+
+        return new_node;
     }
 }
 }
