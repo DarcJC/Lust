@@ -60,7 +60,23 @@ namespace lust
     simple_string &simple_string::operator=(simple_string &&other) noexcept
     {
         if (this != &other) {
-            simple_string(std::forward<simple_string>(other)).swap(*this);
+            if (m_is_heap) {
+                delete[] m_heap_data;
+            }
+            m_length = other.m_length;
+            m_capacity = other.m_capacity;
+            m_is_heap = other.m_is_heap;
+
+            if (m_is_heap) {
+                m_heap_data = other.m_heap_data;
+                other.m_heap_data = nullptr;
+            } else {
+                std::memcpy(m_ss_buffer, other.m_ss_buffer, m_length + 1);
+            }
+
+            other.m_length = 0;
+            other.m_capacity = SSO_BUFFER_SIZE;
+            other.m_is_heap = false;
         }
         return *this;
     }
@@ -124,7 +140,7 @@ namespace lust
                 std::memcpy(other.m_ss_buffer, temp, SSO_BUFFER_SIZE + 1);
                 swap(m_is_heap, other.m_is_heap);
             } else {
-                std::swap_ranges(m_ss_buffer, m_ss_buffer + SSO_BUFFER_SIZE + 1, other.m_ss_buffer);
+                std::swap_ranges(LUST_EXECUTION_CAN_VECTORIZATION , m_ss_buffer, m_ss_buffer + SSO_BUFFER_SIZE + 1, other.m_ss_buffer);
             }
             swap(m_capacity, other.m_capacity);
             swap(m_length, other.m_length);
@@ -160,7 +176,7 @@ namespace lust
     }
 
     void simple_string::ensure_capacity(size_t new_length) {
-        if (new_length <= SSO_BUFFER_SIZE) {
+        if (new_length <= SSO_BUFFER_SIZE || new_length <= m_capacity) {
             return;
         }
 
@@ -170,7 +186,7 @@ namespace lust
             char* new_data = new char[m_capacity + 1];
             std::memcpy(new_data, m_ss_buffer, m_length + 1);
             m_heap_data = new_data;
-        } else if (new_length > m_capacity) {
+        } else {
             m_capacity = new_length;
             char* new_data = new char[m_capacity + 1];
             std::memcpy(new_data, m_heap_data, m_length + 1);
