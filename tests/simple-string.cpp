@@ -1,3 +1,4 @@
+#include "assert.hpp"
 #include "single_file_test.hpp"
 #include "lust/container/simple_string.hpp"
 
@@ -74,4 +75,8 @@ void entry() {
     str14.swap(str15);
     TEST_CHECK_OK_MSG(str14 == "Second", "Swap failed, str14 content is not correct.");
     TEST_CHECK_OK_MSG(str15 == "First", "Swap failed, str15 content is not correct.");
+
+    // Test SSO
+    simple_string str16("SSO");
+    TEST_CHECK_OK_MSG(str16.data() < (void*)(&str16 + sizeof(simple_string)), "Small string optimization is not correct.");
 }
