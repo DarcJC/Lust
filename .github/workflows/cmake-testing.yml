@@ -6,7 +6,7 @@ on:
   pull_request_review:
     types: [submitted]
   pull_request:
-    types: [ready_for_review, synchronize]
+    types: [ready_for_review, synchronize, opened]
 
 jobs:
   build:
