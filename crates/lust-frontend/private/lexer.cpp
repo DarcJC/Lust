@@ -307,6 +307,7 @@ token_exit:
             { "crate", TerminalTokenType::CRATE },
             { "super", TerminalTokenType::SUPER },
             { "mod", TerminalTokenType::MOD },
+            { "self", TerminalTokenType::SELF },
             { "as", TerminalTokenType::AS },
             { "static", TerminalTokenType::STATIC },
             { "ref", TerminalTokenType::REF },
