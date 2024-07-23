@@ -75,7 +75,7 @@ namespace grammar
 
         vector<UniquePtr<ASTNode_GenericParam>> try_parse_generic_params();
 
-        UniquePtr<ASTNode_TypeExpr_Trivial> parse_trival_type();
+        UniquePtr<ASTNode_TypeExpr> parse_trival_type();
 
         UniquePtr<ASTNode_TypeExpr_Tuple> parse_tuple_type();
 
@@ -452,7 +452,9 @@ namespace grammar
     {
         UniquePtr<ASTNode_GenericParam> res = make_unique<ASTNode_GenericParam>();
 
-        res->identifier = m_current_token.value;
+        if (m_current_token.type == lexer::TerminalTokenType::IDENT) {
+            res->identifier = m_current_token.value;
+        }
         expected(lexer::TerminalTokenType::IDENT);
 
         if (optional(lexer::TerminalTokenType::COLON)) {
@@ -478,14 +480,14 @@ namespace grammar
                     expected(lexer::TerminalTokenType::GT);
                     break;
                 }
-            } while (optional(lexer::TerminalTokenType::GT));
+            } while (!optional(lexer::TerminalTokenType::GT));
 
             return res;
         }
         return {};
     }
 
-    UniquePtr<ASTNode_TypeExpr_Trivial> Parser::parse_trival_type()
+    UniquePtr<ASTNode_TypeExpr> Parser::parse_trival_type()
     {
 
         QualifiedName type_name = parse_qualifier_name();
@@ -494,6 +496,7 @@ namespace grammar
             UniquePtr<ASTNode_TypeExpr_Generic> res = make_unique<ASTNode_TypeExpr_Generic>();
             res->base_type = type_name;
             res->params = try_parse_generic_params();
+            return res;
         }
 
         UniquePtr<ASTNode_TypeExpr_Trivial> res = make_unique<ASTNode_TypeExpr_Trivial>();
@@ -614,10 +617,10 @@ namespace grammar
         } else if (lexer::TerminalTokenType::BITAND == m_current_token.type) {
             return UniquePtr<ASTNode_TypeExpr>(parse_reference_type());
         } else if (lexer::TerminalTokenType::IDENT == m_current_token.type) {
-            return UniquePtr<ASTNode_TypeExpr>(parse_trival_type());
+            return parse_trival_type();
         }
 
-        error("");
+        error("Failed to parse type expr");
         return nullptr;
     }
 
@@ -1107,7 +1110,7 @@ namespace grammar
 
         expected(lexer::TerminalTokenType::COLON);
 
-        new_node->field_type = parse_qualifier_name();
+        new_node->field_type = parse_type_expr();
 
         if (!optional(lexer::TerminalTokenType::COMMA)) {
             optional(lexer::TerminalTokenType::SEMICOLON);

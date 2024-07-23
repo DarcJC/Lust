@@ -31,6 +31,9 @@ namespace grammar
             case GrammarRule::INVOKE_PARAMETERS: return "INVOKE_PARAMETERS";
             case GrammarRule::BLOCK_EXPR: return "BLOCK_EXPR";
             case GrammarRule::IF_BLOCK_EXPR: return "IF_BLOCK_EXPR";
+            case GrammarRule::STRUCT: return "STRUCT";
+            case GrammarRule::STRUCT_FIELD: return "STRUCT_FIELD";
+            case GrammarRule::TRAIT: return "TRAIT";
 
             default:
                 break;
@@ -135,6 +138,12 @@ namespace grammar
         for (const UniquePtr<ASTNode_Statement>& statement : statements) {
             res.push_back(statement.get());
         }
+        return res;
+    }
+
+    vector<const IASTNode*> ASTNode_StructField::collect_self_nodes() const {
+        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
+        res.push_back(field_type.get());
         return res;
     }
 

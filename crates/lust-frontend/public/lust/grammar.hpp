@@ -46,6 +46,7 @@ namespace grammar
         IF_BLOCK_EXPR,
         STRUCT,
         STRUCT_FIELD,
+        TRAIT,
 
         MAX_NUM,
     };
@@ -167,7 +168,9 @@ namespace grammar
     struct ASTNode_StructField : public ASTBaseNode<GrammarRule::STRUCT_FIELD, ASTNode_Statement> {
         bool is_field_mutable = false;
         simple_string field_identifier;
-        QualifiedName field_type;
+        UniquePtr<ASTNode_TypeExpr> field_type;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     struct ASTNode_StructDecl : public ASTBaseNode<GrammarRule::STRUCT, ASTNode_Statement> {
@@ -176,6 +179,9 @@ namespace grammar
         vector<UniquePtr<ASTNode_GenericParam>> generic_params;
 
         vector<const IASTNode*> collect_self_nodes() const override;
+    };
+
+    struct ASTNode_TraitDecl : public ASTBaseNode<GrammarRule::TRAIT, ASTNode_Statement> {
     };
 
     template <typename T>
