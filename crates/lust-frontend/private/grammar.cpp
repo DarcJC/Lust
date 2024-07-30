@@ -34,6 +34,8 @@ namespace grammar
             case GrammarRule::STRUCT: return "STRUCT";
             case GrammarRule::STRUCT_FIELD: return "STRUCT_FIELD";
             case GrammarRule::TRAIT: return "TRAIT";
+            case GrammarRule::MORPHISMS_TYPE: return "MORPHISMS_TYPE";
+            case GrammarRule::MORPHISMS_CONSTANT: return "MORPHISMS_CONSTANT";
 
             default:
                 break;
@@ -52,13 +54,13 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_ParamDecl::collect_self_nodes() const {
-            vector<const IASTNode*> res = IASTNode::collect_self_nodes();
+            vector<const IASTNode*> res = Super::collect_self_nodes();
             res.push_back(type.get());
             return res;
     }
 
     vector<const IASTNode*> ASTNode_ParamList::collect_self_nodes() const {
-            vector<const IASTNode*> res = IASTNode::collect_self_nodes();
+            vector<const IASTNode*> res = Super::collect_self_nodes();
         for (const UniquePtr<ASTNode_ParamDecl>& n : params) {
             res.push_back(n.get());
         }
@@ -66,22 +68,28 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_InvokeParameters::collect_self_nodes() const {
-            vector<const IASTNode*> res = IASTNode::collect_self_nodes();
+            vector<const IASTNode*> res = Super::collect_self_nodes();
         for (const auto& n : parameter_expressions) {
             res.push_back(n.get());
         }
         return res;
     }
     vector<const IASTNode*> ASTNode_Attribute::collect_self_nodes() const {
-        return IASTNode::collect_self_nodes();
+        return Super::collect_self_nodes();
     }
     
     vector<const IASTNode*> ASTNode_GenericParam::collect_self_nodes() const {
-        return IASTNode::collect_self_nodes();
+        auto res = Super::collect_self_nodes();
+
+        for (auto& n : types) {
+            res.push_back(n.get());
+        }
+
+        return res;
     }
 
     vector<const IASTNode*> ASTNode_Statement::collect_self_nodes() const {
-        vector<const IASTNode*> res = IASTNode::collect_self_nodes();
+        vector<const IASTNode*> res = Super::collect_self_nodes();
         for (const UniquePtr<ASTNode_Attribute>& attr : attributes) {
             res.push_back(attr.get());
         }
@@ -89,7 +97,7 @@ namespace grammar
     }
 
     simple_string ASTNode_Statement::get_name() const {
-        simple_string name = IASTNode::get_name();
+        simple_string name = Super::get_name();
         if (!is_end_with_semicolon) {
             name += "(RET)";
         }
@@ -97,13 +105,13 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_ExprStatement::collect_self_nodes() const {
-        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
+        vector<const IASTNode*> res = Super::collect_self_nodes();
         res.push_back(expression.get());
         return res;
     }
 
     vector<const IASTNode*> ASTNode_Program::collect_self_nodes() const {
-        vector<const IASTNode*> res = IASTNode::collect_self_nodes();
+        vector<const IASTNode*> res = Super::collect_self_nodes();
         for (const UniquePtr<ASTNode_Attribute>& attr : attributes) {
             res.push_back(attr.get());
         }
@@ -114,14 +122,14 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_VarDecl::collect_self_nodes() const {
-        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
+        vector<const IASTNode*> res = Super::collect_self_nodes();
         res.push_back(specified_type.get());
         res.push_back(evaluate_expression.get());
         return res;
     }
 
     vector<const IASTNode*> ASTNode_FunctionDecl::collect_self_nodes() const {
-        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
+        vector<const IASTNode*> res = Super::collect_self_nodes();
 
         for (auto& generic_param : generic_params) {
             res.push_back(generic_param.get());
@@ -134,7 +142,7 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_Block::collect_self_nodes() const {
-        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
+        vector<const IASTNode*> res = Super::collect_self_nodes();
         for (const UniquePtr<ASTNode_Statement>& statement : statements) {
             res.push_back(statement.get());
         }
@@ -142,16 +150,50 @@ namespace grammar
     }
 
     vector<const IASTNode*> ASTNode_StructField::collect_self_nodes() const {
-        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
+        vector<const IASTNode*> res = Super::collect_self_nodes();
         res.push_back(field_type.get());
         return res;
     }
 
     vector<const IASTNode*> ASTNode_StructDecl::collect_self_nodes() const {
-        vector<const IASTNode*> res = ASTNode_Statement::collect_self_nodes();
+        vector<const IASTNode*> res = Super::collect_self_nodes();
         for (const UniquePtr<ASTNode_StructField>& field : fields) {
             res.push_back(field.get());
         }
+        return res;
+    }
+
+    vector<const IASTNode*> ASTNode_MorphismsType::collect_self_nodes() const {
+        vector<const IASTNode*> res = Super::collect_self_nodes();
+        res.push_back(value.get());
+        return res;
+    }
+
+    vector<const IASTNode*> ASTNode_MorphismsConstant::collect_self_nodes() const {
+        vector<const IASTNode*> res = Super::collect_self_nodes();
+        res.push_back(value.get());
+        return res;
+    }
+
+    vector<const IASTNode*> ASTNode_TraitDecl::collect_self_nodes() const {
+        vector<const IASTNode*> res = Super::collect_self_nodes();
+
+        for (const auto& n : generic_params) {
+            res.push_back(n.get());
+        }
+
+        for (const auto& n : morphisms_types) {
+            res.push_back(n.get());
+        }
+
+        for (const auto& n : morphisms_constants) {
+            res.push_back(n.get());
+        }
+
+        for (const auto& n : functions) {
+            res.push_back(n.get());
+        }
+
         return res;
     }
 }

@@ -101,6 +101,12 @@ namespace grammar
 
         UniquePtr<ASTNode_StructField> parse_struct_field_declaration();
 
+        UniquePtr<ASTNode_TraitDecl> parse_trait_declaration();
+
+        UniquePtr<ASTNode_MorphismsType> parse_morphisms_type();
+
+        UniquePtr<ASTNode_MorphismsConstant> parse_morphisms_constant();
+
         // === Basic Expressions ===
         UniquePtr<ASTNode_Operator> parse_expression();
         UniquePtr<ASTNode_Operator> parse_expr_assignment();
@@ -253,6 +259,9 @@ namespace grammar
             break;
         case lexer::TerminalTokenType::STRUCT:
             statement = parse_struct_declaration();
+            break;
+        case lexer::TerminalTokenType::TRAIT:
+            statement = parse_trait_declaration();
             break;
         
         default:
@@ -452,10 +461,7 @@ namespace grammar
     {
         UniquePtr<ASTNode_GenericParam> res = make_unique<ASTNode_GenericParam>();
 
-        if (m_current_token.type == lexer::TerminalTokenType::IDENT) {
-            res->identifier = m_current_token.value;
-        }
-        expected(lexer::TerminalTokenType::IDENT);
+        res->types.push_back(parse_type_expr());
 
         if (optional(lexer::TerminalTokenType::COLON)) {
             do {
@@ -473,14 +479,18 @@ namespace grammar
         if (optional(lexer::TerminalTokenType::LT)) {
             vector<UniquePtr<ASTNode_GenericParam>> res;
 
-            do {
-                auto param = parse_generic_param();
-                res.push_back(std::move(param));
+            while (!optional(lexer::TerminalTokenType::GT)) {
+                if (auto param = parse_generic_param()) {
+                    res.push_back(std::move(param));
+                } else {
+                    break;
+                }
+
                 if (!optional(lexer::TerminalTokenType::COMMA)) {
                     expected(lexer::TerminalTokenType::GT);
                     break;
                 }
-            } while (!optional(lexer::TerminalTokenType::GT));
+            }
 
             return res;
         }
@@ -512,24 +522,17 @@ namespace grammar
 
         expected(lexer::TerminalTokenType::LPAREN);
 
-        if (!optional(lexer::TerminalTokenType::RPAREN)) {
-            do {
-                if (auto type_exp = parse_type_expr(); type_exp) {
-                    res->composite_types.push_back(std::move(type_exp));
-                } else {
-                    break;
-                }
+        while (!optional(lexer::TerminalTokenType::RPAREN)) {
+            if (auto type_exp = parse_type_expr(); type_exp) {
+                res->composite_types.push_back(std::move(type_exp));
+            } else {
+                break;
+            }
 
-                if (optional(lexer::TerminalTokenType::COMMA)) {
-                    continue;
-                } else if (optional(lexer::TerminalTokenType::RPAREN)) {
-                    break;
-                } else {
-                    error("Expected ',' or ')' in tuple list");
-                    return nullptr;
-                }
-
-            } while (true);
+            if (!optional(lexer::TerminalTokenType::COMMA)) {
+                expected(lexer::TerminalTokenType::LPAREN, "Expected ',' or ')' in tuple list");
+                break;
+            }
         }
 
         return res;
@@ -1104,7 +1107,7 @@ namespace grammar
         auto new_node = make_unique<ASTNode_StructField>();
 
         if (lexer::TerminalTokenType::IDENT == m_current_token.type) {
-            new_node->field_identifier = m_current_token.value;
+            new_node->identifier = m_current_token.value;
         }
         expected(lexer::TerminalTokenType::IDENT);
 
@@ -1115,6 +1118,91 @@ namespace grammar
         if (!optional(lexer::TerminalTokenType::COMMA)) {
             optional(lexer::TerminalTokenType::SEMICOLON);
         }
+
+        return new_node;
+    }
+
+    UniquePtr<ASTNode_TraitDecl> Parser::parse_trait_declaration() {
+        auto new_node = make_unique<ASTNode_TraitDecl>();
+
+        expected(lexer::TerminalTokenType::TRAIT);
+        if (m_current_token.type == lexer::TerminalTokenType::IDENT) {
+            new_node->identifier = m_current_token.value;
+        }
+        expected(lexer::TerminalTokenType::IDENT);
+
+        new_node->generic_params = try_parse_generic_params();
+
+        // Traits without a body
+        if (optional(lexer::TerminalTokenType::SEMICOLON)) {
+            return new_node;
+        }
+
+        expected(lexer::TerminalTokenType::LBRACE);
+
+        while (!optional(lexer::TerminalTokenType::RBRACE)) {
+            if (lexer::TerminalTokenType::TYPE == m_current_token.type) {
+                new_node->morphisms_types.push_back(parse_morphisms_type());
+                expected(lexer::TerminalTokenType::SEMICOLON);
+            } else if (lexer::TerminalTokenType::CONST == m_current_token.type) {
+                new_node->morphisms_constants.push_back(parse_morphisms_constant());
+                expected(lexer::TerminalTokenType::SEMICOLON);
+            } else {
+                if (auto func = parse_function_declaration()) {
+                    new_node->functions.push_back(func);
+                } else {
+                    break;
+                }
+            }
+
+            while (optional(lexer::TerminalTokenType::SEMICOLON)) {}
+        }
+
+        return new_node;
+    }
+
+    UniquePtr<ASTNode_MorphismsType> Parser::parse_morphisms_type() {
+        auto new_node = make_unique<ASTNode_MorphismsType>();
+
+        expected(lexer::TerminalTokenType::TYPE);
+
+        if (lexer::TerminalTokenType::IDENT == m_current_token.type) {
+            new_node->identifier = m_current_token.get_value();
+        }
+        expected(lexer::TerminalTokenType::IDENT);
+
+        if (optional(lexer::TerminalTokenType::SEMICOLON)) {
+            return new_node;
+        }
+
+        expected(lexer::TerminalTokenType::EQ);
+
+        new_node->value = parse_type_expr();
+
+        return new_node;
+    }
+
+    UniquePtr<ASTNode_MorphismsConstant> Parser::parse_morphisms_constant() {
+        auto new_node = make_unique<ASTNode_MorphismsConstant>();
+
+        expected(lexer::TerminalTokenType::CONST);
+
+        if (lexer::TerminalTokenType::IDENT == m_current_token.type) {
+            new_node->identifier = m_current_token.get_value();
+        }
+        expected(lexer::TerminalTokenType::IDENT);
+
+        expected(lexer::TerminalTokenType::COLON);
+
+        new_node->type = parse_type_expr();
+
+        if (optional(lexer::TerminalTokenType::SEMICOLON)) {
+            return new_node;
+        }
+
+        expected(lexer::TerminalTokenType::EQ);
+
+        new_node->value = parse_expression();
 
         return new_node;
     }

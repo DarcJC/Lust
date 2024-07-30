@@ -14,6 +14,10 @@ struct Foo<T> {
     val: T,
 }
 
+trait Foo {
+    fn new() -> Self;
+}
+
 impl Display for Foo<u8> {
 
     fn display(self) -> String {

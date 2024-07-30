@@ -25,6 +25,7 @@ namespace grammar
 
         PROGRAM,
         STATEMENT,
+        NAMED_STATEMENT,
         EXPR_STATEMENT,
         VAR_DECL,
         FUNCTION_DECL,
@@ -47,6 +48,8 @@ namespace grammar
         STRUCT,
         STRUCT_FIELD,
         TRAIT,
+        MORPHISMS_TYPE,
+        MORPHISMS_CONSTANT,
 
         MAX_NUM,
     };
@@ -80,6 +83,8 @@ namespace grammar
         constexpr static GrammarRule static_type() {
             return Rule;
         }
+
+        using Super = Parent;
     };
 
     struct ASTNode_ParamDecl : public ASTBaseNode<GrammarRule::PARAMETER> {
@@ -109,7 +114,7 @@ namespace grammar
     };
 
     struct ASTNode_GenericParam : public ASTBaseNode<GrammarRule::GENERIC_PARAM> {
-        simple_string identifier;
+        vector<UniquePtr<ASTNode_TypeExpr>> types;
         vector<QualifiedName> constraints;
 
         vector<const IASTNode*> collect_self_nodes() const override;
@@ -122,6 +127,10 @@ namespace grammar
 
         vector<const IASTNode*> collect_self_nodes() const override;
         simple_string get_name() const override;
+    };
+
+    struct ASTNode_NamedStatement : public ASTBaseNode<GrammarRule::NAMED_STATEMENT, ASTNode_Statement> {
+        simple_string identifier;
     };
 
     struct ASTNode_ExprStatement : public ASTBaseNode<GrammarRule::EXPR_STATEMENT, ASTNode_Statement> {
@@ -148,9 +157,8 @@ namespace grammar
         vector<const IASTNode*> collect_self_nodes() const override;
     };
 
-    struct ASTNode_FunctionDecl : public ASTBaseNode<GrammarRule::FUNCTION_DECL, ASTNode_Statement> {
+    struct ASTNode_FunctionDecl : public ASTBaseNode<GrammarRule::FUNCTION_DECL, ASTNode_NamedStatement> {
         bool is_async = false;
-        simple_string identifier;
         vector<UniquePtr<ASTNode_GenericParam>> generic_params;
         UniquePtr<ASTNode_ParamList> params;
         UniquePtr<ASTNode_TypeExpr> ret_type;
@@ -165,23 +173,40 @@ namespace grammar
         vector<const IASTNode*> collect_self_nodes() const override;
     };
 
-    struct ASTNode_StructField : public ASTBaseNode<GrammarRule::STRUCT_FIELD, ASTNode_Statement> {
+    struct ASTNode_StructField : public ASTBaseNode<GrammarRule::STRUCT_FIELD, ASTNode_NamedStatement> {
         bool is_field_mutable = false;
-        simple_string field_identifier;
         UniquePtr<ASTNode_TypeExpr> field_type;
 
         vector<const IASTNode*> collect_self_nodes() const override;
     };
 
-    struct ASTNode_StructDecl : public ASTBaseNode<GrammarRule::STRUCT, ASTNode_Statement> {
-        simple_string identifier;
+    struct ASTNode_StructDecl : public ASTBaseNode<GrammarRule::STRUCT, ASTNode_NamedStatement> {
         vector<UniquePtr<ASTNode_StructField>> fields{};
         vector<UniquePtr<ASTNode_GenericParam>> generic_params;
 
         vector<const IASTNode*> collect_self_nodes() const override;
     };
 
-    struct ASTNode_TraitDecl : public ASTBaseNode<GrammarRule::TRAIT, ASTNode_Statement> {
+    struct ASTNode_MorphismsType : public ASTBaseNode<GrammarRule::MORPHISMS_TYPE, ASTNode_NamedStatement> {
+        UniquePtr<ASTNode_TypeExpr> value;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
+    };
+
+    struct ASTNode_MorphismsConstant : public ASTBaseNode<GrammarRule::MORPHISMS_CONSTANT, ASTNode_NamedStatement> {
+        UniquePtr<ASTNode_TypeExpr> type;
+        UniquePtr<ASTNode_Expr> value;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
+    };
+
+    struct ASTNode_TraitDecl : public ASTBaseNode<GrammarRule::TRAIT, ASTNode_NamedStatement> {
+        vector<UniquePtr<ASTNode_GenericParam>> generic_params;
+        vector<UniquePtr<ASTNode_MorphismsType>> morphisms_types;
+        vector<UniquePtr<ASTNode_MorphismsConstant>> morphisms_constants;
+        vector<UniquePtr<ASTNode_FunctionDecl>> functions;
+
+        vector<const IASTNode*> collect_self_nodes() const override;
     };
 
     template <typename T>
