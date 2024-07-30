@@ -636,18 +636,25 @@ namespace grammar
     {
         UniquePtr<ASTNode_ParamDecl> res = make_unique<ASTNode_ParamDecl>();
 
-        if (expected(lexer::TerminalTokenType::IDENT)) {
+        if (optional(lexer::TerminalTokenType::SELF)) {
+            res->is_instance_function = true;
             res->identifier = m_current_token.value;
+        } else if (optional(lexer::TerminalTokenType::IDENT)) {
+            res->identifier = m_current_token.value;
+
+            expected(lexer::TerminalTokenType::COLON);
+
+            if (auto expr = parse_type_expr()) {
+                res->type = std::move(expr);
+            } else {
+                return nullptr;
+            }
+        } else {
+            error("Expected parameter name or 'self'");
+            return nullptr;
         }
 
-        expected(lexer::TerminalTokenType::COLON);
-
-        if (auto expr = parse_type_expr(); expr) {
-            res->type = std::move(expr);
-            return res;
-        }
-
-        return nullptr;
+        return res;
     }
 
     UniquePtr<ASTNode_InvokeParameters> Parser::parse_invoke_param_list() {

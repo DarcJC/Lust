@@ -15,7 +15,7 @@ struct Foo<T> {
 }
 
 trait Foo {
-    fn new() -> Self;
+    fn new(self) -> Self;
 }
 
 impl Display for Foo<u8> {

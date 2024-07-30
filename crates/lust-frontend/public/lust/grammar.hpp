@@ -91,6 +91,8 @@ namespace grammar
         UniquePtr<ASTNode_TypeExpr> type;
         simple_string identifier;
 
+        bool is_instance_function = false;
+
         vector<const IASTNode*> collect_self_nodes() const override;
     };
 
